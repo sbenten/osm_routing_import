@@ -9,14 +9,14 @@ BEGIN
 	INSERT INTO landuses (osm_id, type)
 	SELECT w.osm_id, 											
 		unnest(xpath('//way/tag[@k="natural"]/@v', w.way))
-	FROM osm_ways_sheffield w;
+	FROM osm_ways w;
 
 	UPDATE landuses SET name = x.name
 	FROM (
 		SELECT w.osm_id, 
 			unnest(xpath('//way/tag[@k="natural"]/@v', w.way)), 
 			unnest(xpath('//way/tag[@k="name"]/@v', w.way)) AS name
-		FROM osm_ways_sheffield w
+		FROM osm_ways w
 	) AS x 
 	WHERE landuses.osm_id = x.osm_id;
 
@@ -24,14 +24,14 @@ BEGIN
 	INSERT INTO landuses (osm_id, type)
 	SELECT w.osm_id, 											
 		unnest(xpath('//way/tag[@k="waterway"]/@v', w.way))
-	FROM osm_ways_sheffield w;
+	FROM osm_ways w;
 
 	UPDATE landuses SET name = x.name
 	FROM (
 		SELECT w.osm_id, 
 			unnest(xpath('//way/tag[@k="waterway"]/@v', w.way)), 
 			unnest(xpath('//way/tag[@k="name"]/@v', w.way)) AS name
-		FROM osm_ways_sheffield w
+		FROM osm_ways w
 	) AS x 
 	WHERE landuses.osm_id = x.osm_id;
 
@@ -41,7 +41,7 @@ BEGIN
 	FROM (
 		SELECT w.osm_id, 											
 			unnest(xpath('//way/tag[@k="building"]/@v', w.way))
-		FROM osm_ways_sheffield w
+		FROM osm_ways w
 	) x;
 
 	RAISE NOTICE 'Missing the relations flagged as reservoir or pond';
@@ -51,7 +51,7 @@ BEGIN
 		SELECT r.osm_id AS relation_osm_id,
 			(unnest(xpath('//relation/member[@type="way" and @role="outer"]/@ref', r.relation)) :: varchar) :: bigint AS osm_id, 											
 			unnest(xpath('//relation/tag[@k="water"]/@v', r.relation))
-		FROM osm_relations_sheffield r
+		FROM osm_relations r
 	) x;
 	 
 	UPDATE landuses SET name = x.name
@@ -60,7 +60,7 @@ BEGIN
 			(unnest(xpath('//relation/member[@type="way" and @role="outer"]/@ref', r.relation)) :: varchar) :: bigint AS osm_id, 
 			unnest(xpath('//relation/tag[@k="water"]/@v', r.relation)),
 			unnest(xpath('//relation/tag[@k="name"]/@v', r.relation)) AS name
-		FROM osm_relations_sheffield r
+		FROM osm_relations r
 	) AS x 
 	WHERE landuses.osm_id = x.osm_id;
 
@@ -71,7 +71,7 @@ BEGIN
 		SELECT r.osm_id AS relation_osm_id,
 			(unnest(xpath('//relation/member[@type="way" and @role="outer"]/@ref', r.relation)) :: varchar) :: bigint AS osm_id, 											
 			unnest(xpath('//relation/tag[@k="building"]/@v', r.relation))
-		FROM osm_relations_sheffield r
+		FROM osm_relations r
 	) x;
 	 
 	UPDATE landuses SET name = x.name
@@ -80,7 +80,7 @@ BEGIN
 			(unnest(xpath('//relation/member[@type="way" and @role="outer"]/@ref', r.relation)) :: varchar) :: bigint AS osm_id, 
 			unnest(xpath('//relation/tag[@k="building"]/@v', r.relation)),
 			unnest(xpath('//relation/tag[@k="name"]/@v', r.relation)) AS name
-		FROM osm_relations_sheffield r
+		FROM osm_relations r
 	) AS x 
 	WHERE landuses.osm_id = x.osm_id;
 
@@ -99,10 +99,10 @@ BEGIN
 		FROM (
 			SELECT 
 				ST_SetSRID(ST_MakeLine(array_agg(n.geom)), 27700) AS boundary
-			FROM osm_nodes_sheffield n 
+			FROM osm_nodes n 
 			JOIN (
 				SELECT unnest(w.node_osm_ids) :: bigint AS osm_ids 
-				FROM osm_ways_sheffield w 
+				FROM osm_ways w 
 				WHERE w.osm_id = rec.osm_id
 			) w ON w.osm_ids = n.osm_id
 		) AS i

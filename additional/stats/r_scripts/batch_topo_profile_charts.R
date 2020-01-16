@@ -17,7 +17,7 @@ con <- dbConnect(drv, dbname = dbname, host = dbhost, port = dbport, user = dbus
 rm(dbpw)
 groups <- dbGetQuery(con,
 "SELECT DISTINCT group_id
-FROM sheffield.batch_run_res_summary
+FROM batch_run_res_summary
 WHERE sample = true")
 
 for(i in 1:nrow(groups))
@@ -25,7 +25,7 @@ for(i in 1:nrow(groups))
   #FOR TESTING PLOT ASSIGN i<-1 42
 
   #get the points for the lines(s) as x (distance), y (altitude) values from a pre-filled table
-  sql <- paste("SELECT (SUM(distance) OVER (PARTITION BY group_id ORDER BY sub_group_id, batch_run_res_id, id) / 1000) AS X, altitude AS Y FROM sheffield.batch_run_res_points WHERE group_id = ", groups[i, "group_id"], " AND geom IS NOT NULL ORDER BY sub_group_id, batch_run_res_id, id;", sep="", collapse = NULL)
+  sql <- paste("SELECT (SUM(distance) OVER (PARTITION BY group_id ORDER BY sub_group_id, batch_run_res_id, id) / 1000) AS X, altitude AS Y FROM batch_run_res_points WHERE group_id = ", groups[i, "group_id"], " AND geom IS NOT NULL ORDER BY sub_group_id, batch_run_res_id, id;", sep="", collapse = NULL)
   groupDef <- dbGetQuery(con, sql)
   
   # variables for the polygon which requires a few extra points than a line

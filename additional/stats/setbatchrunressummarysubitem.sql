@@ -1,8 +1,8 @@
-﻿-- Function: sheffield.setbatchrunressummarysubitem(integer, integer)
+﻿-- Function: setbatchrunressummarysubitem(integer, integer)
 
--- DROP FUNCTION sheffield.setbatchrunressummarysubitem(integer, integer);
+-- DROP FUNCTION setbatchrunressummarysubitem(integer, integer);
 
-CREATE OR REPLACE FUNCTION sheffield.setbatchrunressummarysubitem(
+CREATE OR REPLACE FUNCTION setbatchrunressummarysubitem(
     batchitemid integer,
     direction integer)
   RETURNS void AS
@@ -43,7 +43,7 @@ BEGIN
 
 	FOR rec IN
 		SELECT DISTINCT group_id, sub_group_id
-		FROM sheffield.vw_batch_run_results_base
+		FROM vw_batch_run_results_base
 		WHERE batch_item_id = batchItemId
 	LOOP
 		BEGIN
@@ -54,21 +54,21 @@ BEGIN
 			INTO v_geom
 			FROM (
 				SELECT geom 
-				FROM sheffield.batch_run_res_points
+				FROM batch_run_res_points
 				WHERE sub_group_id = rec.sub_group_id
 				ORDER BY batch_run_res_id, id
 			) i;*/
 
 			/*SELECT ST_LineMerge(ST_Collect(geom)) 
 			INTO v_unknown
-			FROM sheffield.vw_batch_run_results_base
+			FROM vw_batch_run_results_base
 			WHERE sub_group_id = rec.sub_group_id;*/
 
 			/*SELECT ST_LineMerge(ST_Collect(i.geom)) 
 			INTO v_unknown
 			FROM (
 				SELECT geom 
-				FROM sheffield.vw_batch_run_results_base
+				FROM vw_batch_run_results_base
 				WHERE sub_group_id = rec.sub_group_id
 				ORDER BY resseq
 			) i;
@@ -113,7 +113,7 @@ BEGIN
 				v_batch_item_description,
 				v_itemsource,
 				v_itemtarget
-			FROM sheffield.vw_batch_run_results_base
+			FROM vw_batch_run_results_base
 			WHERE sub_group_id = rec.sub_group_id
 			AND itemsource IS NOT NULL
 			LIMIT 1;
@@ -137,7 +137,7 @@ BEGIN
 				v_imd_hlthrk,
 				v_imd_hlth_decile,
 				v_imd_hlth_quintile
-			FROM import.lsoa_imd_sheffield --TODO Alter to use sheffield schema
+			FROM lsoa_imd_sheffield --TODO Alter to use sheffield schema
 			WHERE ST_Contains(geom, (CASE WHEN direction = 1 THEN v_itemsource ELSE v_itemtarget END))
 			OR ST_Touches(geom, (CASE WHEN direction = 1 THEN v_itemsource ELSE v_itemtarget END));
 
@@ -154,12 +154,12 @@ BEGIN
 				v_active_ascent,
 				v_active_descent,
 				v_active_cost_met
-			FROM sheffield.vw_batch_run_results_base
+			FROM vw_batch_run_results_base
 			WHERE sub_group_id = rec.sub_group_id
 			AND sub_mode_filter IN (3, 4);
 
-			INSERT INTO sheffield.batch_run_res_summary_sub
-			SELECT nextval('sheffield.batch_run_res_summary_sub_id_seq'),
+			INSERT INTO batch_run_res_summary_sub
+			SELECT nextval('batch_run_res_summary_sub_id_seq'),
 				v_batch_id,
 				v_batch_run_id,
 				v_batch_item_id,
@@ -182,12 +182,12 @@ BEGIN
 				sum(delay_met_cost), 
 				sum(delay_time_cost) * '00:00:01'::interval,
 				to_char(sum(delay_time_cost) * '00:00:01'::interval, 'HH24:MI:SS'::text),
-				sum((sheffield.getfloatsetting('weight_female_average'::character varying) - sheffield.getfloatsetting('weight_female_standard_deviation'::character varying)) * delay_met_cost / 60::double precision), --TODO Error in setting the MET cost calculates the MET in minutes, so needs dividing here into seconds
-				sum(sheffield.getfloatsetting('weight_female_average'::character varying) * delay_met_cost / 60::double precision),
-				sum((sheffield.getfloatsetting('weight_female_average'::character varying) + sheffield.getfloatsetting('weight_female_standard_deviation'::character varying)) * delay_met_cost / 60::double precision),
-				sum((sheffield.getfloatsetting('weight_male_average'::character varying) - sheffield.getfloatsetting('weight_male_standard_deviation'::character varying)) * delay_met_cost / 60::double precision),
-				sum(sheffield.getfloatsetting('weight_male_average'::character varying) * delay_met_cost / 60::double precision),
-				sum((sheffield.getfloatsetting('weight_male_average'::character varying) + sheffield.getfloatsetting('weight_male_standard_deviation'::character varying)) * delay_met_cost / 60::double precision),
+				sum((getfloatsetting('weight_female_average'::character varying) - getfloatsetting('weight_female_standard_deviation'::character varying)) * delay_met_cost / 60::double precision), --TODO Error in setting the MET cost calculates the MET in minutes, so needs dividing here into seconds
+				sum(getfloatsetting('weight_female_average'::character varying) * delay_met_cost / 60::double precision),
+				sum((getfloatsetting('weight_female_average'::character varying) + getfloatsetting('weight_female_standard_deviation'::character varying)) * delay_met_cost / 60::double precision),
+				sum((getfloatsetting('weight_male_average'::character varying) - getfloatsetting('weight_male_standard_deviation'::character varying)) * delay_met_cost / 60::double precision),
+				sum(getfloatsetting('weight_male_average'::character varying) * delay_met_cost / 60::double precision),
+				sum((getfloatsetting('weight_male_average'::character varying) + getfloatsetting('weight_male_standard_deviation'::character varying)) * delay_met_cost / 60::double precision),
 				v_active_length,
 				v_active_cost_time,
 				v_active_ascent,
@@ -195,12 +195,12 @@ BEGIN
 				v_active_cost_met, 
 				v_active_cost_time * '00:00:01'::interval,
 				to_char(v_active_cost_time * '00:00:01'::interval, 'HH24:MI:SS'::text),
-				(sheffield.getfloatsetting('weight_female_average'::character varying) - sheffield.getfloatsetting('weight_female_standard_deviation'::character varying)) * v_active_cost_met / 60::double precision,
-				sheffield.getfloatsetting('weight_female_average'::character varying) * v_active_cost_met / 60::double precision,
-				(sheffield.getfloatsetting('weight_female_average'::character varying) + sheffield.getfloatsetting('weight_female_standard_deviation'::character varying)) * v_active_cost_met / 60::double precision,
-				(sheffield.getfloatsetting('weight_male_average'::character varying) - sheffield.getfloatsetting('weight_male_standard_deviation'::character varying)) * v_active_cost_met / 60::double precision,
-				sheffield.getfloatsetting('weight_male_average'::character varying) * v_active_cost_met / 60::double precision,
-				(sheffield.getfloatsetting('weight_male_average'::character varying) + sheffield.getfloatsetting('weight_male_standard_deviation'::character varying)) * v_active_cost_met / 60::double precision,
+				(getfloatsetting('weight_female_average'::character varying) - getfloatsetting('weight_female_standard_deviation'::character varying)) * v_active_cost_met / 60::double precision,
+				getfloatsetting('weight_female_average'::character varying) * v_active_cost_met / 60::double precision,
+				(getfloatsetting('weight_female_average'::character varying) + getfloatsetting('weight_female_standard_deviation'::character varying)) * v_active_cost_met / 60::double precision,
+				(getfloatsetting('weight_male_average'::character varying) - getfloatsetting('weight_male_standard_deviation'::character varying)) * v_active_cost_met / 60::double precision,
+				getfloatsetting('weight_male_average'::character varying) * v_active_cost_met / 60::double precision,
+				(getfloatsetting('weight_male_average'::character varying) + getfloatsetting('weight_male_standard_deviation'::character varying)) * v_active_cost_met / 60::double precision,
 				v_imd_code,
 				v_imd_name,
 				v_imd_ovrk,
@@ -209,7 +209,7 @@ BEGIN
 				v_imd_hlthrk,
 				v_imd_hlth_decile,
 				v_imd_hlth_quintile
-			FROM sheffield.vw_batch_run_results_base
+			FROM vw_batch_run_results_base
 			WHERE sub_group_id = rec.sub_group_id;
 		EXCEPTION
 			WHEN OTHERS THEN
@@ -221,5 +221,5 @@ END
 $BODY$
   LANGUAGE plpgsql VOLATILE
   COST 100;
-ALTER FUNCTION sheffield.setbatchrunressummarysubitem(integer, integer)
+ALTER FUNCTION setbatchrunressummarysubitem(integer, integer)
   OWNER TO postgres;

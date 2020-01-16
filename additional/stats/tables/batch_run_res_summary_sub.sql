@@ -1,23 +1,23 @@
-﻿-- Sequence: sheffield.batch_run_res_summary_sub_id_seq
+﻿-- Sequence: batch_run_res_summary_sub_id_seq
 
--- DROP SEQUENCE sheffield.batch_run_res_summary_sub_id_seq;
+-- DROP SEQUENCE batch_run_res_summary_sub_id_seq;
 
-CREATE SEQUENCE sheffield.batch_run_res_summary_sub_id_seq
+CREATE SEQUENCE batch_run_res_summary_sub_id_seq
   INCREMENT 1
   MINVALUE 1
   MAXVALUE 9223372036854775807
   START 1
   CACHE 1;
-ALTER TABLE sheffield.batch_run_res_summary_sub_id_seq
+ALTER TABLE batch_run_res_summary_sub_id_seq
   OWNER TO postgres;
 
--- Table: sheffield.batch_run_res_summary_sub
+-- Table: batch_run_res_summary_sub
 
--- DROP TABLE sheffield.batch_run_res_summary_sub;
+-- DROP TABLE batch_run_res_summary_sub;
 
-CREATE TABLE sheffield.batch_run_res_summary_sub
+CREATE TABLE batch_run_res_summary_sub
 (
-  id integer NOT NULL DEFAULT nextval('sheffield.batch_run_res_summary_sub_id_seq'::regclass),
+  id integer NOT NULL DEFAULT nextval('batch_run_res_summary_sub_id_seq'::regclass),
   batch_id integer NOT NULL,
   batch_run_id integer NOT NULL,
   batch_item_id integer NOT NULL,
@@ -72,42 +72,42 @@ CREATE TABLE sheffield.batch_run_res_summary_sub
 WITH (
   OIDS=FALSE
 );
-ALTER TABLE sheffield.batch_run_res_summary_sub
+ALTER TABLE batch_run_res_summary_sub
   OWNER TO postgres;
 
--- Index: sheffield.batch_run_res_summary_sub_item_id_idx
+-- Index: batch_run_res_summary_sub_item_id_idx
 
--- DROP INDEX sheffield.batch_run_res_summary_sub_item_id_idx;
+-- DROP INDEX batch_run_res_summary_sub_item_id_idx;
 
 CREATE INDEX batch_run_res_summary_sub_item_id_idx
-  ON sheffield.batch_run_res_summary_sub
+  ON batch_run_res_summary_sub
   USING btree
   (batch_item_id);
 
--- Index: sheffield.batch_run_res_summary_sub_mode_filter_idx
+-- Index: batch_run_res_summary_sub_mode_filter_idx
 
--- DROP INDEX sheffield.batch_run_res_summary_sub_mode_filter_idx;
+-- DROP INDEX batch_run_res_summary_sub_mode_filter_idx;
 
 CREATE INDEX batch_run_res_summary_sub_mode_filter_idx
-  ON sheffield.batch_run_res_summary_sub
+  ON batch_run_res_summary_sub
   USING btree
   (mode_filter);
 
--- Index: sheffield.batch_run_res_summary_sub_source_idx
+-- Index: batch_run_res_summary_sub_source_idx
 
--- DROP INDEX sheffield.batch_run_res_summary_sub_source_idx;
+-- DROP INDEX batch_run_res_summary_sub_source_idx;
 
 CREATE INDEX batch_run_res_summary_sub_source_idx
-  ON sheffield.batch_run_res_summary_sub
+  ON batch_run_res_summary_sub
   USING gist
   (source);
 
--- Index: sheffield.batch_run_res_summary_sub_target_idx
+-- Index: batch_run_res_summary_sub_target_idx
 
--- DROP INDEX sheffield.batch_run_res_summary_sub_target_idx;
+-- DROP INDEX batch_run_res_summary_sub_target_idx;
 
 CREATE INDEX batch_run_res_summary_sub_target_idx
-  ON sheffield.batch_run_res_summary_sub
+  ON batch_run_res_summary_sub
   USING gist
   (target);
 

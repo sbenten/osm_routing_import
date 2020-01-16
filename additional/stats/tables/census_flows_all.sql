@@ -1,21 +1,21 @@
-﻿-- Sequence: sheffield.census_flows_all_seq
+﻿-- Sequence: census_flows_all_seq
 
--- DROP SEQUENCE sheffield.census_flows_all_seq;
+-- DROP SEQUENCE census_flows_all_seq;
 
-CREATE SEQUENCE sheffield.census_flows_all_seq
+CREATE SEQUENCE census_flows_all_seq
   INCREMENT 1
   MINVALUE 1
   MAXVALUE 9223372036854775807
   START 1
   CACHE 1;
-ALTER TABLE sheffield.census_flows_all_seq
+ALTER TABLE census_flows_all_seq
   OWNER TO postgres;
 
--- Table: sheffield.census_flows_all
+-- Table: census_flows_all
 
--- DROP TABLE sheffield.census_flows_all;
+-- DROP TABLE census_flows_all;
 
-CREATE TABLE sheffield.census_flows_all
+CREATE TABLE census_flows_all
 (
   source_oa character varying,
   target_oa character varying,
@@ -29,7 +29,7 @@ CREATE TABLE sheffield.census_flows_all
   hlth2015 integer,
   hlthdecile integer,
   hlthquintile integer,
-  id integer NOT NULL DEFAULT nextval('sheffield.census_flows_all_seq'::regclass),
+  id integer NOT NULL DEFAULT nextval('census_flows_all_seq'::regclass),
   home_settlement_id character varying,
   work_settlement_id character varying,
   flow_direction character varying
@@ -37,42 +37,42 @@ CREATE TABLE sheffield.census_flows_all
 WITH (
   OIDS=FALSE
 );
-ALTER TABLE sheffield.census_flows_all
+ALTER TABLE census_flows_all
   OWNER TO postgres;
 
--- Index: sheffield.census_flows_all_source_gist
+-- Index: census_flows_all_source_gist
 
--- DROP INDEX sheffield.census_flows_all_source_gist;
+-- DROP INDEX census_flows_all_source_gist;
 
 CREATE INDEX census_flows_all_source_gist
-  ON sheffield.census_flows_all
+  ON census_flows_all
   USING gist
   (source_geom);
 
--- Index: sheffield.census_flows_all_source_oa_idx
+-- Index: census_flows_all_source_oa_idx
 
--- DROP INDEX sheffield.census_flows_all_source_oa_idx;
+-- DROP INDEX census_flows_all_source_oa_idx;
 
 CREATE INDEX census_flows_all_source_oa_idx
-  ON sheffield.census_flows_all
+  ON census_flows_all
   USING btree
   (source_oa COLLATE pg_catalog."default");
 
--- Index: sheffield.census_flows_all_target_gist
+-- Index: census_flows_all_target_gist
 
--- DROP INDEX sheffield.census_flows_all_target_gist;
+-- DROP INDEX census_flows_all_target_gist;
 
 CREATE INDEX census_flows_all_target_gist
-  ON sheffield.census_flows_all
+  ON census_flows_all
   USING gist
   (target_geom);
 
--- Index: sheffield.census_flows_all_target_oa_idx
+-- Index: census_flows_all_target_oa_idx
 
--- DROP INDEX sheffield.census_flows_all_target_oa_idx;
+-- DROP INDEX census_flows_all_target_oa_idx;
 
 CREATE INDEX census_flows_all_target_oa_idx
-  ON sheffield.census_flows_all
+  ON census_flows_all
   USING btree
   (target_oa COLLATE pg_catalog."default");
 

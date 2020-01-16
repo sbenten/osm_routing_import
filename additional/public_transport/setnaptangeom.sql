@@ -2,7 +2,7 @@ CREATE FUNCTION setnaptangeom() RETURNS void
     LANGUAGE plpgsql
     AS $$
 /*
-Geometry corrections for NaPTAN import.
+Geometry corrections for NaPTAN 
 NaPTAN reported public transport stops are inaccurate sometimes to within 10 meters...assign the stop to a position on the highway network.
 
 PARAMS

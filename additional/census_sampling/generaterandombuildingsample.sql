@@ -1,8 +1,8 @@
-﻿-- Function: import.generaterandombuildingsample(integer, geometry, double precision)
+﻿-- Function: generaterandombuildingsample(integer, geometry, double precision)
 
--- DROP FUNCTION import.generaterandombuildingsample(integer, geometry, double precision);
+-- DROP FUNCTION generaterandombuildingsample(integer, geometry, double precision);
 
-CREATE OR REPLACE FUNCTION import.generaterandombuildingsample(
+CREATE OR REPLACE FUNCTION generaterandombuildingsample(
     IN n integer,
     IN container geometry,
     IN expand double precision DEFAULT 0.0)
@@ -18,8 +18,8 @@ container = geometry(Polygon, 27700); Containing polygon to control the extent o
 expand (optional) = double precision; Map units to expand the provided container. Positive value expands the container, negative shrinks.
  
 e.g.
-SELECT * FROM generateRandomBuildingSample(100, (SELECT ST_Extent(geom) FROM sheffield.ways_clean));
-SELECT * FROM generateRandomBuildingSample(50, (SELECT ST_Extent(geom) FROM sheffield.ways_clean), -1000);
+SELECT * FROM generateRandomBuildingSample(100, (SELECT ST_Extent(geom) FROM ways_clean));
+SELECT * FROM generateRandomBuildingSample(50, (SELECT ST_Extent(geom) FROM ways_clean), -1000);
 */
 DECLARE 
 countRecords int8;
@@ -35,7 +35,7 @@ BEGIN
 	--Check both overlaps and contains. An example from Sheffield has blocks of flats not quite completely within
 	--a census output area, resulting in a division by zero error, it touching geometries are not included. 
 	SELECT COUNT(1) INTO countRecords
-	FROM import.landuses l
+	FROM landuses l
 	WHERE l.type IN ('building', 'building_multipolygon')
 	AND (ST_Overlaps(containingGeom, l.geom) = true OR ST_Contains(containingGeom, l.geom) = true);
 
@@ -68,7 +68,7 @@ BEGIN
 			FROM 
 			(
 				SELECT uuid_generate_v4() as guid, l.id, ST_Centroid(l.geom) AS pnt
-				FROM import.landuses l
+				FROM landuses l
 				TABLESAMPLE BERNOULLI (percentRecords)
 				WHERE l.type IN ('building', 'building_multipolygon')
 				AND (ST_Overlaps(containingGeom, l.geom) = true OR ST_Contains(containingGeom, l.geom) = true)
@@ -79,5 +79,5 @@ $BODY$
   LANGUAGE plpgsql VOLATILE
   COST 100
   ROWS 1000;
-ALTER FUNCTION import.generaterandombuildingsample(integer, geometry, double precision)
+ALTER FUNCTION generaterandombuildingsample(integer, geometry, double precision)
   OWNER TO postgres;

@@ -22,7 +22,7 @@ counts <- dbGetQuery(con, "SELECT id, gid, code, name, label, ruc11cd, ruc11, ov
                     morning_stop_time_count_b10, evening_stop_time_count_b10, total_stop_time_count_b10, 
                     stop_count_b25, morning_stop_time_count_b25, evening_stop_time_count_b25, 
                     total_stop_time_count_b25
-                    FROM sheffield.lsoa_imd_sheffield_pt")
+                    FROM lsoa_imd_sheffield_pt")
 
 max_stop_count_df <- counts[which.max(counts$stop_count_b25),]
 max_stop_times_count_df <- counts[which.max(counts$total_stop_time_count_b25),]

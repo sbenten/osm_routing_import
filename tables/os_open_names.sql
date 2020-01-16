@@ -1,8 +1,8 @@
-﻿-- Table: import.os_open_names
+﻿-- Table: os_open_names
 
--- DROP TABLE import.os_open_names;
+-- DROP TABLE os_open_names;
 
-CREATE TABLE import.os_open_names
+CREATE TABLE os_open_names
 (
   id character varying NOT NULL,
   geom geometry(MultiPoint,27700),
@@ -17,5 +17,5 @@ CREATE TABLE import.os_open_names
 WITH (
   OIDS=FALSE
 );
-ALTER TABLE import.os_open_names
+ALTER TABLE os_open_names
   OWNER TO postgres;

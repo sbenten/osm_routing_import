@@ -1,8 +1,8 @@
-﻿-- Function: sheffield.nearestwalkablewaytopoint(geometry, double precision)
+﻿-- Function: nearestwalkablewaytopoint(geometry, double precision)
 
--- DROP FUNCTION sheffield.nearestwalkablewaytopoint(geometry, double precision);
+-- DROP FUNCTION nearestwalkablewaytopoint(geometry, double precision);
 
-CREATE OR REPLACE FUNCTION sheffield.nearestwalkablewaytopoint(
+CREATE OR REPLACE FUNCTION nearestwalkablewaytopoint(
     startpoint geometry,
     tolerence double precision DEFAULT '-1'::integer)
   RETURNS bigint AS
@@ -18,8 +18,8 @@ resultWay geometry;
 resultId int8;
 BEGIN
 	SELECT c.geom, c.id INTO resultWay, resultId
-	FROM sheffield.way_points p
-	JOIN sheffield.ways_clean c ON c.id = p.ways_clean_id
+	FROM way_points p
+	JOIN ways_clean c ON c.id = p.ways_clean_id
 	WHERE c.walk_allow = true
 	ORDER BY p.geom <-> startPoint
 	LIMIT 1;
@@ -34,5 +34,5 @@ END;
 $BODY$
   LANGUAGE plpgsql VOLATILE
   COST 100;
-ALTER FUNCTION sheffield.nearestwalkablewaytopoint(geometry, double precision)
+ALTER FUNCTION nearestwalkablewaytopoint(geometry, double precision)
   OWNER TO postgres;

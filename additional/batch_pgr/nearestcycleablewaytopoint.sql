@@ -1,8 +1,8 @@
-﻿-- Function: sheffield.nearestcycleablewaytopoint(geometry, double precision)
+﻿-- Function: nearestcycleablewaytopoint(geometry, double precision)
 
--- DROP FUNCTION sheffield.nearestcycleablewaytopoint(geometry, double precision);
+-- DROP FUNCTION nearestcycleablewaytopoint(geometry, double precision);
 
-CREATE OR REPLACE FUNCTION sheffield.nearestcycleablewaytopoint(
+CREATE OR REPLACE FUNCTION nearestcycleablewaytopoint(
     startpoint geometry,
     tolerence double precision DEFAULT '-1'::integer)
   RETURNS bigint AS
@@ -17,8 +17,8 @@ resultWay geometry;
 resultId int8;
 BEGIN
 	SELECT c.geom, c.id INTO resultWay, resultId
-	FROM sheffield.way_points p
-	JOIN sheffield.ways_clean c ON c.id = p.ways_clean_id
+	FROM way_points p
+	JOIN ways_clean c ON c.id = p.ways_clean_id
 	WHERE c.cycle_allow = true
 	ORDER BY p.geom <-> startPoint
 	LIMIT 1;
@@ -33,5 +33,5 @@ END;
 $BODY$
   LANGUAGE plpgsql VOLATILE
   COST 100;
-ALTER FUNCTION sheffield.nearestcycleablewaytopoint(geometry, double precision)
+ALTER FUNCTION nearestcycleablewaytopoint(geometry, double precision)
   OWNER TO postgres;

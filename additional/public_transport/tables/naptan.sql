@@ -1,8 +1,8 @@
-﻿-- Table: import.naptan
+﻿-- Table: naptan
 
--- DROP TABLE import.naptan;
+-- DROP TABLE naptan;
 
-CREATE TABLE import.naptan
+CREATE TABLE naptan
 (
   atcocode character varying,
   naptancode character varying,
@@ -24,15 +24,15 @@ CREATE TABLE import.naptan
 WITH (
   OIDS=FALSE
 );
-ALTER TABLE import.naptan
+ALTER TABLE naptan
   OWNER TO postgres;
 
--- Index: import.naptan_gist
+-- Index: naptan_gist
 
--- DROP INDEX import.naptan_gist;
+-- DROP INDEX naptan_gist;
 
 CREATE INDEX naptan_gist
-  ON import.naptan
+  ON naptan
   USING gist
   (geom);
 

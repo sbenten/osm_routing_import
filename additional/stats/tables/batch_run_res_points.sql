@@ -1,21 +1,21 @@
-﻿-- Sequence: sheffield.batch_run_res_points_id_seq
+﻿-- Sequence: batch_run_res_points_id_seq
 
--- DROP SEQUENCE sheffield.batch_run_res_points_id_seq;
+-- DROP SEQUENCE batch_run_res_points_id_seq;
 
-CREATE SEQUENCE sheffield.batch_run_res_points_id_seq
+CREATE SEQUENCE batch_run_res_points_id_seq
   INCREMENT 1
   MINVALUE 1
   MAXVALUE 9223372036854775807
   START 1
   CACHE 1;
-ALTER TABLE sheffield.batch_run_res_points_id_seq
+ALTER TABLE batch_run_res_points_id_seq
   OWNER TO postgres;
 
--- Table: sheffield.batch_run_res_points
+-- Table: batch_run_res_points
 
--- DROP TABLE sheffield.batch_run_res_points;
+-- DROP TABLE batch_run_res_points;
 
-CREATE TABLE sheffield.batch_run_res_points
+CREATE TABLE batch_run_res_points
 (
   id integer,
   geom geometry(Point,27700),
@@ -38,24 +38,24 @@ CREATE TABLE sheffield.batch_run_res_points
 WITH (
   OIDS=FALSE
 );
-ALTER TABLE sheffield.batch_run_res_points
+ALTER TABLE batch_run_res_points
   OWNER TO postgres;
 
--- Index: sheffield.res_points_mode_filter_idx
+-- Index: res_points_mode_filter_idx
 
--- DROP INDEX sheffield.res_points_mode_filter_idx;
+-- DROP INDEX res_points_mode_filter_idx;
 
 CREATE INDEX res_points_mode_filter_idx
-  ON sheffield.batch_run_res_points
+  ON batch_run_res_points
   USING btree
   (mode_filter);
 
--- Index: sheffield.res_points_sub_mode_filter_idx
+-- Index: res_points_sub_mode_filter_idx
 
--- DROP INDEX sheffield.res_points_sub_mode_filter_idx;
+-- DROP INDEX res_points_sub_mode_filter_idx;
 
 CREATE INDEX res_points_sub_mode_filter_idx
-  ON sheffield.batch_run_res_points
+  ON batch_run_res_points
   USING btree
   (sub_mode_filter);
 

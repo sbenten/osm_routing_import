@@ -1,8 +1,8 @@
-﻿-- Table: sheffield.batch_run_res_summary
+﻿-- Table: batch_run_res_summary
 
--- DROP TABLE sheffield.batch_run_res_summary;
+-- DROP TABLE batch_run_res_summary;
 
-CREATE TABLE sheffield.batch_run_res_summary
+CREATE TABLE batch_run_res_summary
 (
   batch_run_id integer NOT NULL,
   batch_item_id integer NOT NULL,
@@ -196,42 +196,42 @@ CREATE TABLE sheffield.batch_run_res_summary
 WITH (
   OIDS=FALSE
 );
-ALTER TABLE sheffield.batch_run_res_summary
+ALTER TABLE batch_run_res_summary
   OWNER TO postgres;
 
--- Index: sheffield.summary_batch_item_id_idx
+-- Index: summary_batch_item_id_idx
 
--- DROP INDEX sheffield.summary_batch_item_id_idx;
+-- DROP INDEX summary_batch_item_id_idx;
 
 CREATE INDEX summary_batch_item_id_idx
-  ON sheffield.batch_run_res_summary
+  ON batch_run_res_summary
   USING btree
   (batch_item_id);
 
--- Index: sheffield.summary_batch_run_id_idx
+-- Index: summary_batch_run_id_idx
 
--- DROP INDEX sheffield.summary_batch_run_id_idx;
+-- DROP INDEX summary_batch_run_id_idx;
 
 CREATE INDEX summary_batch_run_id_idx
-  ON sheffield.batch_run_res_summary
+  ON batch_run_res_summary
   USING btree
   (batch_run_id);
 
--- Index: sheffield.summary_group_id_idx
+-- Index: summary_group_id_idx
 
--- DROP INDEX sheffield.summary_group_id_idx;
+-- DROP INDEX summary_group_id_idx;
 
 CREATE INDEX summary_group_id_idx
-  ON sheffield.batch_run_res_summary
+  ON batch_run_res_summary
   USING btree
   (group_id);
 
--- Index: sheffield.summary_sub_mode_filter_idx
+-- Index: summary_sub_mode_filter_idx
 
--- DROP INDEX sheffield.summary_sub_mode_filter_idx;
+-- DROP INDEX summary_sub_mode_filter_idx;
 
 CREATE INDEX summary_sub_mode_filter_idx
-  ON sheffield.batch_run_res_summary
+  ON batch_run_res_summary
   USING btree
   (mode_filter);
 

@@ -48,7 +48,7 @@ groups <- dbGetQuery(con,
                      ELSE
                      to_char(pt_delay_time_agg_cost * '00:00:01'::interval, 'MIm SSs'::text) 
                      END AS pt_time_format
-                     FROM sheffield.batch_run_res_summary
+                     FROM batch_run_res_summary
                      WHERE sample = true")
 
 #https://stackoverflow.com/questions/20123147/add-line-break-to-axis-labels-and-ticks-in-ggplot

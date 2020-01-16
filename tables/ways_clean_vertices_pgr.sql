@@ -1,21 +1,21 @@
-﻿-- Sequence: import.ways_clean_vertices_pgr_id_seq
+﻿-- Sequence: ways_clean_vertices_pgr_id_seq
 
--- DROP SEQUENCE import.ways_clean_vertices_pgr_id_seq;
+-- DROP SEQUENCE ways_clean_vertices_pgr_id_seq;
 
-CREATE SEQUENCE import.ways_clean_vertices_pgr_id_seq
+CREATE SEQUENCE ways_clean_vertices_pgr_id_seq
   INCREMENT 1
   MINVALUE 1
   MAXVALUE 9223372036854775807
   START 1
   CACHE 1;
-ALTER TABLE import.ways_clean_vertices_pgr_id_seq
+ALTER TABLE ways_clean_vertices_pgr_id_seq
   OWNER TO postgres;
 
--- Table: import.ways_clean_vertices_pgr
+-- Table: ways_clean_vertices_pgr
 
--- DROP TABLE import.ways_clean_vertices_pgr;
+-- DROP TABLE ways_clean_vertices_pgr;
 
-CREATE TABLE import.ways_clean_vertices_pgr
+CREATE TABLE ways_clean_vertices_pgr
 (
   id bigserial NOT NULL,
   cnt integer,
@@ -28,15 +28,15 @@ CREATE TABLE import.ways_clean_vertices_pgr
 WITH (
   OIDS=FALSE
 );
-ALTER TABLE import.ways_clean_vertices_pgr
+ALTER TABLE ways_clean_vertices_pgr
   OWNER TO postgres;
 
--- Index: import.ways_clean_vertices_pgr_the_geom_idx
+-- Index: ways_clean_vertices_pgr_the_geom_idx
 
--- DROP INDEX import.ways_clean_vertices_pgr_the_geom_idx;
+-- DROP INDEX ways_clean_vertices_pgr_the_geom_idx;
 
 CREATE INDEX ways_clean_vertices_pgr_the_geom_idx
-  ON import.ways_clean_vertices_pgr
+  ON ways_clean_vertices_pgr
   USING gist
   (the_geom);
 

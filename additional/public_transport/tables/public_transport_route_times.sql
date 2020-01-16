@@ -1,24 +1,24 @@
-﻿-- Sequence: import.public_transport_route_times_id_seq
+﻿-- Sequence: public_transport_route_times_id_seq
 
--- DROP SEQUENCE import.public_transport_route_times_id_seq;
+-- DROP SEQUENCE public_transport_route_times_id_seq;
 
-CREATE SEQUENCE import.public_transport_route_times_id_seq
+CREATE SEQUENCE public_transport_route_times_id_seq
   INCREMENT 1
   MINVALUE 1
   MAXVALUE 9223372036854775807
   START 1
   CACHE 1;
-ALTER TABLE import.public_transport_route_times_id_seq
+ALTER TABLE public_transport_route_times_id_seq
   OWNER TO postgres;
 
 
--- Table: import.public_transport_route_times
+-- Table: public_transport_route_times
 
--- DROP TABLE import.public_transport_route_times;
+-- DROP TABLE public_transport_route_times;
 
-CREATE TABLE import.public_transport_route_times
+CREATE TABLE public_transport_route_times
 (
-  id integer NOT NULL DEFAULT nextval('import.public_transport_route_times_id_seq'::regclass),
+  id integer NOT NULL DEFAULT nextval('public_transport_route_times_id_seq'::regclass),
   file_id integer,
   route_id character varying NOT NULL,
   route_link_id character varying NOT NULL,
@@ -89,75 +89,75 @@ CREATE TABLE import.public_transport_route_times
   public_transport_route_connection_way_id integer,
   CONSTRAINT public_transport_route_times_pkey PRIMARY KEY (id),
   CONSTRAINT source_public_transport_route_stop_id_fkey FOREIGN KEY (source_public_transport_route_stop_id)
-      REFERENCES import.public_transport_route_stops (id) MATCH SIMPLE
+      REFERENCES public_transport_route_stops (id) MATCH SIMPLE
       ON UPDATE NO ACTION ON DELETE NO ACTION DEFERRABLE INITIALLY IMMEDIATE,
   CONSTRAINT source_public_transport_stop_id_fkey FOREIGN KEY (source_public_transport_stop_id)
-      REFERENCES import.public_transport_stops (id) MATCH SIMPLE
+      REFERENCES public_transport_stops (id) MATCH SIMPLE
       ON UPDATE NO ACTION ON DELETE NO ACTION DEFERRABLE INITIALLY IMMEDIATE,
   CONSTRAINT target_public_transport_route_stop_id_fkey FOREIGN KEY (target_public_transport_route_stop_id)
-      REFERENCES import.public_transport_route_stops (id) MATCH SIMPLE
+      REFERENCES public_transport_route_stops (id) MATCH SIMPLE
       ON UPDATE NO ACTION ON DELETE NO ACTION DEFERRABLE INITIALLY IMMEDIATE,
   CONSTRAINT target_public_transport_stop_id_fkey FOREIGN KEY (target_public_transport_stop_id)
-      REFERENCES import.public_transport_stops (id) MATCH SIMPLE
+      REFERENCES public_transport_stops (id) MATCH SIMPLE
       ON UPDATE NO ACTION ON DELETE NO ACTION DEFERRABLE INITIALLY IMMEDIATE
 )
 WITH (
   OIDS=FALSE
 );
-ALTER TABLE import.public_transport_route_times
+ALTER TABLE public_transport_route_times
   OWNER TO postgres;
 
--- Index: import.public_transport_route_times_geom_gist
+-- Index: public_transport_route_times_geom_gist
 
--- DROP INDEX import.public_transport_route_times_geom_gist;
+-- DROP INDEX public_transport_route_times_geom_gist;
 
 CREATE INDEX public_transport_route_times_geom_gist
-  ON import.public_transport_route_times
+  ON public_transport_route_times
   USING gist
   (geom);
 
--- Index: import.public_transport_route_times_source_geom_gist
+-- Index: public_transport_route_times_source_geom_gist
 
--- DROP INDEX import.public_transport_route_times_source_geom_gist;
+-- DROP INDEX public_transport_route_times_source_geom_gist;
 
 CREATE INDEX public_transport_route_times_source_geom_gist
-  ON import.public_transport_route_times
+  ON public_transport_route_times
   USING gist
   (source_geom);
 
--- Index: import.public_transport_route_times_source_idx
+-- Index: public_transport_route_times_source_idx
 
--- DROP INDEX import.public_transport_route_times_source_idx;
+-- DROP INDEX public_transport_route_times_source_idx;
 
 CREATE INDEX public_transport_route_times_source_idx
-  ON import.public_transport_route_times
+  ON public_transport_route_times
   USING btree
   (source);
 
--- Index: import.public_transport_route_times_target_geom_gist
+-- Index: public_transport_route_times_target_geom_gist
 
--- DROP INDEX import.public_transport_route_times_target_geom_gist;
+-- DROP INDEX public_transport_route_times_target_geom_gist;
 
 CREATE INDEX public_transport_route_times_target_geom_gist
-  ON import.public_transport_route_times
+  ON public_transport_route_times
   USING gist
   (target_geom);
 
--- Index: import.public_transport_route_times_target_idx
+-- Index: public_transport_route_times_target_idx
 
--- DROP INDEX import.public_transport_route_times_target_idx;
+-- DROP INDEX public_transport_route_times_target_idx;
 
 CREATE INDEX public_transport_route_times_target_idx
-  ON import.public_transport_route_times
+  ON public_transport_route_times
   USING btree
   (target);
 
--- Index: import.public_transport_route_times_vehicle_jcode_idx
+-- Index: public_transport_route_times_vehicle_jcode_idx
 
--- DROP INDEX import.public_transport_route_times_vehicle_jcode_idx;
+-- DROP INDEX public_transport_route_times_vehicle_jcode_idx;
 
 CREATE INDEX public_transport_route_times_vehicle_jcode_idx
-  ON import.public_transport_route_times
+  ON public_transport_route_times
   USING btree
   (vehicle_journey_code COLLATE pg_catalog."default");
 

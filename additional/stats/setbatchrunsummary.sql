@@ -1,8 +1,8 @@
-﻿-- Function: sheffield.setbatchrunsummary()
+﻿-- Function: setbatchrunsummary()
 
--- DROP FUNCTION sheffield.setbatchrunsummary();
+-- DROP FUNCTION setbatchrunsummary();
 
-CREATE OR REPLACE FUNCTION sheffield.setbatchrunsummary()
+CREATE OR REPLACE FUNCTION setbatchrunsummary()
   RETURNS void AS
 $BODY$
 /*
@@ -13,7 +13,7 @@ The geom is the extent of the flow by all the modes of transport.
 */
 BEGIN 
 
-	INSERT INTO sheffield.batch_run_res_summary (batch_run_id, 
+	INSERT INTO batch_run_res_summary (batch_run_id, 
 		batch_item_id, 
 		group_id,
 		batch_item_description,
@@ -44,19 +44,19 @@ BEGIN
 		home_imd_health_rank,
 		home_health_decile,
 		home_health_quintile
-	FROM sheffield.batch_run_res_summary_sub;
+	FROM batch_run_res_summary_sub;
 
 	
 	WITH w AS (
 		--Get the extent of travel for all the modes of transport for each flow
 		SELECT r.batch_run_id, r.batch_item_id,
 			ST_SetSRID(ST_Extent(r.resgeom), 27700) AS geom
-		FROM sheffield.vw_batch_run_results_base r
+		FROM vw_batch_run_results_base r
 		GROUP BY r.batch_run_id, r.batch_item_id
 	)
-	UPDATE sheffield.batch_run_res_summary SET geom = w.geom
+	UPDATE batch_run_res_summary SET geom = w.geom
 	FROM w
-	WHERE sheffield.batch_run_res_summary.batch_item_id = w.batch_item_id;
+	WHERE batch_run_res_summary.batch_item_id = w.batch_item_id;
 
 	WITH t1 AS (
 		SELECT batch_run_id, batch_item_id, group_id, 
@@ -88,11 +88,11 @@ BEGIN
 			SUM(active_male_minus_1sd_agg_calories) AS car_active_male_minus_1sd_agg_calories,
 			SUM(active_male_average_agg_calories) AS car_active_male_average_agg_calories,
 			SUM(active_male_plus_1sd_agg_calories) AS car_active_male_plus_1sd_agg_calories
-		FROM sheffield.batch_run_res_summary_sub
+		FROM batch_run_res_summary_sub
 		WHERE mode_filter = 1 --Car opptimistic about parking
 		GROUP BY batch_run_id, batch_item_id, group_id
 	)
-	UPDATE sheffield.batch_run_res_summary SET 
+	UPDATE batch_run_res_summary SET 
 			car_length_agg_cost = t1.car_length_agg_cost,
 			car_time_agg_cost = t1. car_time_agg_cost,
 			car_delay_time_agg_cost = t1.car_delay_time_agg_cost,
@@ -122,7 +122,7 @@ BEGIN
 			car_active_male_average_agg_calories = t1.car_active_male_average_agg_calories,
 			car_active_male_plus_1sd_agg_calories = t1.car_active_male_plus_1sd_agg_calories
 	FROM t1
-	WHERE sheffield.batch_run_res_summary.batch_item_id = t1.batch_item_id;
+	WHERE batch_run_res_summary.batch_item_id = t1.batch_item_id;
 
 	WITH t2 AS (
 	SELECT batch_run_id, batch_item_id, group_id, 
@@ -154,11 +154,11 @@ BEGIN
 		SUM(active_male_minus_1sd_agg_calories) AS park_active_male_minus_1sd_agg_calories,
 		SUM(active_male_average_agg_calories) AS park_active_male_average_agg_calories,
 		SUM(active_male_plus_1sd_agg_calories) AS park_active_male_plus_1sd_agg_calories
-	FROM sheffield.batch_run_res_summary_sub
+	FROM batch_run_res_summary_sub
 	WHERE mode_filter = 2 --Car pessimistic about parking
 	GROUP BY batch_run_id, batch_item_id, group_id
 	)
-	UPDATE sheffield.batch_run_res_summary SET 
+	UPDATE batch_run_res_summary SET 
 		park_length_agg_cost = t2.park_length_agg_cost,
 		park_time_agg_cost = t2.park_time_agg_cost,
 		park_delay_time_agg_cost = t2.park_delay_time_agg_cost,
@@ -188,7 +188,7 @@ BEGIN
 		park_active_male_average_agg_calories = t2.park_active_male_average_agg_calories,
 		park_active_male_plus_1sd_agg_calories = t2.park_active_male_plus_1sd_agg_calories
 	FROM t2
-	WHERE sheffield.batch_run_res_summary.batch_item_id = t2.batch_item_id;
+	WHERE batch_run_res_summary.batch_item_id = t2.batch_item_id;
 
 
 	WITH t3 AS (
@@ -221,11 +221,11 @@ BEGIN
 		SUM(active_male_minus_1sd_agg_calories) AS bike_active_male_minus_1sd_agg_calories,
 		SUM(active_male_average_agg_calories) AS bike_active_male_average_agg_calories,
 		SUM(active_male_plus_1sd_agg_calories) AS bike_active_male_plus_1sd_agg_calories
-	FROM sheffield.batch_run_res_summary_sub
+	FROM batch_run_res_summary_sub
 	WHERE mode_filter = 3 --Biking
 	GROUP BY batch_run_id, batch_item_id, group_id
 	)
-	UPDATE sheffield.batch_run_res_summary SET 
+	UPDATE batch_run_res_summary SET 
 		bike_length_agg_cost = t3.bike_length_agg_cost,
 		bike_time_agg_cost = t3.bike_time_agg_cost,
 		bike_delay_time_agg_cost = t3.bike_delay_time_agg_cost,
@@ -255,7 +255,7 @@ BEGIN
 		bike_active_male_average_agg_calories = t3.bike_active_male_average_agg_calories,
 		bike_active_male_plus_1sd_agg_calories = t3.bike_active_male_plus_1sd_agg_calories
 	FROM t3
-	WHERE sheffield.batch_run_res_summary.batch_item_id = t3.batch_item_id;
+	WHERE batch_run_res_summary.batch_item_id = t3.batch_item_id;
 
 
 	WITH t4 AS (
@@ -288,11 +288,11 @@ BEGIN
 		SUM(active_male_minus_1sd_agg_calories) AS walk_active_male_minus_1sd_agg_calories,
 		SUM(active_male_average_agg_calories) AS walk_active_male_average_agg_calories,
 		SUM(active_male_plus_1sd_agg_calories) AS walk_active_male_plus_1sd_agg_calories
-	FROM sheffield.batch_run_res_summary_sub
+	FROM batch_run_res_summary_sub
 	WHERE mode_filter = 4 --Walking
 	GROUP BY batch_run_id, batch_item_id, group_id
 	)
-	UPDATE sheffield.batch_run_res_summary SET
+	UPDATE batch_run_res_summary SET
 		walk_length_agg_cost = t4.walk_length_agg_cost,
 		walk_time_agg_cost = t4.walk_time_agg_cost,
 		walk_delay_time_agg_cost = t4.walk_delay_time_agg_cost,
@@ -322,7 +322,7 @@ BEGIN
 		walk_active_male_average_agg_calories = t4.walk_active_male_average_agg_calories,
 		walk_active_male_plus_1sd_agg_calories = t4.walk_active_male_plus_1sd_agg_calories
 	FROM t4
-	WHERE sheffield.batch_run_res_summary.batch_item_id = t4.batch_item_id;
+	WHERE batch_run_res_summary.batch_item_id = t4.batch_item_id;
 
 
 	WITH t6 AS (
@@ -355,11 +355,11 @@ BEGIN
 		SUM(active_male_minus_1sd_agg_calories) AS pt_active_male_minus_1sd_agg_calories,
 		SUM(active_male_average_agg_calories) AS pt_active_male_average_agg_calories,
 		SUM(active_male_plus_1sd_agg_calories) AS pt_active_male_plus_1sd_agg_calories		
-	FROM sheffield.batch_run_res_summary_sub
+	FROM batch_run_res_summary_sub
 	WHERE mode_filter = 6 --Public transport
 	GROUP BY batch_run_id, batch_item_id, group_id
 	)
-	UPDATE sheffield.batch_run_res_summary SET
+	UPDATE batch_run_res_summary SET
 		pt_length_agg_cost = t6.pt_length_agg_cost,
 		pt_time_agg_cost = t6.pt_time_agg_cost,
 		pt_delay_time_agg_cost = t6.pt_delay_time_agg_cost,
@@ -389,11 +389,11 @@ BEGIN
 		pt_active_male_average_agg_calories = t6.pt_active_male_average_agg_calories,
 		pt_active_male_plus_1sd_agg_calories = t6.pt_active_male_plus_1sd_agg_calories
 	FROM t6
-	WHERE sheffield.batch_run_res_summary.batch_item_id = t6.batch_item_id;
+	WHERE batch_run_res_summary.batch_item_id = t6.batch_item_id;
 
 
 	--Store the current costs for the mode, just saves looking them up later
-	UPDATE sheffield.batch_run_res_summary SET 
+	UPDATE batch_run_res_summary SET 
 			length_agg_cost = CASE WHEN mode_filter = 1 THEN car_length_agg_cost
 						WHEN mode_filter = 2 THEN park_length_agg_cost
 						WHEN mode_filter = 3 THEN bike_length_agg_cost
@@ -570,5 +570,5 @@ END
 $BODY$
   LANGUAGE plpgsql VOLATILE
   COST 100;
-ALTER FUNCTION sheffield.setbatchrunsummary()
+ALTER FUNCTION setbatchrunsummary()
   OWNER TO postgres;

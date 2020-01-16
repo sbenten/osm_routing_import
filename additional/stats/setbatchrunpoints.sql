@@ -1,15 +1,15 @@
-﻿-- Function: sheffield.setbatchrunpoints(integer)
+﻿-- Function: setbatchrunpoints(integer)
 
--- DROP FUNCTION sheffield.setbatchrunpoints(integer);
+-- DROP FUNCTION setbatchrunpoints(integer);
 
-CREATE OR REPLACE FUNCTION sheffield.setbatchrunpoints(batchrunid integer)
+CREATE OR REPLACE FUNCTION setbatchrunpoints(batchrunid integer)
   RETURNS void AS
 $BODY$
 DECLARE
 rec record;
 BEGIN
 	RAISE NOTICE 'Deleting any previous records for batch_run_id %', batchRunId;
-	DELETE FROM sheffield.batch_run_res_points WHERE batch_run_id = batchRunId;
+	DELETE FROM batch_run_res_points WHERE batch_run_id = batchRunId;
 
 	RAISE NOTICE 'Creating points for edges traversed "forwards"';
 	WITH w AS (
@@ -24,7 +24,7 @@ BEGIN
 				WHEN id = lastgroupnode THEN 1
 				ELSE 0
 			END AS lastgroupedge
-		FROM sheffield.vw_batch_run_results_base
+		FROM vw_batch_run_results_base
 		WHERE batch_run_id = batchRunId
 		AND direction = 1
 		AND group_id IS NOT NULL
@@ -34,7 +34,7 @@ BEGIN
 	r AS (
 		SELECT rid, geom FROM terrain.dtm_extent
 	)
-	INSERT INTO sheffield.batch_run_res_points (geom, batch_run_res_id, batch_run_id, batch_item_id, group_id, sub_group_id, dtm_id, first_node, last_node)
+	INSERT INTO batch_run_res_points (geom, batch_run_res_id, batch_run_id, batch_item_id, group_id, sub_group_id, dtm_id, first_node, last_node)
 	SELECT ST_PointN(w.geom, w.num), 
 		w.id, w.batch_run_id, w.batch_item_id, w.group_id, w.sub_group_id,
 		(SELECT r.rid FROM r WHERE ST_Contains(r.geom, ST_PointN(w.geom, w.num))),
@@ -64,7 +64,7 @@ BEGIN
 				WHEN id = lastgroupnode THEN 1
 				ELSE 0
 			END AS lastgroupedge
-		FROM sheffield.vw_batch_run_results_base
+		FROM vw_batch_run_results_base
 		WHERE batch_run_id = batchRunId
 		AND direction = 0		
 		AND group_id IS NOT NULL
@@ -74,7 +74,7 @@ BEGIN
 	r AS (
 		SELECT rid, geom FROM terrain.dtm_extent
 	)
-	INSERT INTO sheffield.batch_run_res_points (geom, batch_run_res_id, batch_run_id, batch_item_id, group_id, sub_group_id, dtm_id, first_node, last_node)
+	INSERT INTO batch_run_res_points (geom, batch_run_res_id, batch_run_id, batch_item_id, group_id, sub_group_id, dtm_id, first_node, last_node)
 	SELECT ST_PointN(w.geom, w.num), 
 		w.id, w.batch_run_id, w.batch_item_id, w.group_id, w.sub_group_id,
 		(SELECT r.rid FROM r WHERE ST_Contains(r.geom, ST_PointN(w.geom, w.num))),
@@ -96,36 +96,36 @@ BEGIN
 		SELECT rid, rast FROM terrain.dtm
 	),
 	p AS (
-		SELECT id, geom, dtm_id FROM sheffield.batch_run_res_points WHERE batch_run_id = batchRunId
+		SELECT id, geom, dtm_id FROM batch_run_res_points WHERE batch_run_id = batchRunId
 	)
-	UPDATE sheffield.batch_run_res_points SET altitude = ST_Value(r.rast, p.geom) 
+	UPDATE batch_run_res_points SET altitude = ST_Value(r.rast, p.geom) 
 	FROM r, p
-	WHERE sheffield.batch_run_res_points.id = p.id
+	WHERE batch_run_res_points.id = p.id
 	AND p.dtm_id = r.rid
 	AND batch_run_id = batchRunId; 
 
 	RAISE NOTICE 'Calculating distance between each point';
 	FOR rec IN 
 		SELECT DISTINCT group_id
-		FROM sheffield.batch_run_res_points
+		FROM batch_run_res_points
 		WHERE batch_run_id = batchRunId
 	LOOP
-		UPDATE sheffield.batch_run_res_points SET distance = s.dist
+		UPDATE batch_run_res_points SET distance = s.dist
 		FROM (
 			SELECT id, 
 			CASE 
 				WHEN first_node = 1 THEN 0
 				ELSE ST_Distance(geom, lag(geom) OVER (PARTITION BY group_id ORDER BY batch_run_res_id, id))
 			END AS dist
-			FROM sheffield.batch_run_res_points
+			FROM batch_run_res_points
 			WHERE group_id = rec.group_id
 			ORDER BY batch_run_res_id, id
 		) s
-		WHERE sheffield.batch_run_res_points.id = s.id;
+		WHERE batch_run_res_points.id = s.id;
 	END LOOP;
 END 
 $BODY$
   LANGUAGE plpgsql VOLATILE
   COST 100;
-ALTER FUNCTION sheffield.setbatchrunpoints(integer)
+ALTER FUNCTION setbatchrunpoints(integer)
   OWNER TO postgres;

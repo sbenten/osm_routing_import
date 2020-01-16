@@ -1,8 +1,8 @@
-﻿-- Function: sheffield.runbatch(integer, integer)
+﻿-- Function: runbatch(integer, integer)
 
--- DROP FUNCTION sheffield.runbatch(integer, integer);
+-- DROP FUNCTION runbatch(integer, integer);
 
-CREATE OR REPLACE FUNCTION sheffield.runbatch(
+CREATE OR REPLACE FUNCTION runbatch(
     batchid integer,
     delaytype integer DEFAULT 1)
   RETURNS integer AS
@@ -15,10 +15,10 @@ Insert a record of the batch_run and the details of the route chosen in batch_ru
 
 Returns the batch_runs.id to re-query the path and parameters of the chosen route.
 
-batchId = sheffield.batches.id
+batchId = batches.id
 delayType = enum: 1 = Morning rush hour, 2 = Evening rush hour
 
-Usage: SELECT sheffield.runBatch(1, 2, 1500);
+Usage: SELECT runBatch(1, 2, 1500);
 */
 DECLARE
 runId integer;
@@ -87,63 +87,63 @@ rec2 record;
 
 BEGIN
 	-- defer the constraint
-	SET CONSTRAINTS sheffield.batch_run_res_run_fkey DEFERRED;
+	SET CONSTRAINTS batch_run_res_run_fkey DEFERRED;
 	
 	-- get the next batch_run.id up front, we're going to use it alot
-	runId := (SELECT nextval('sheffield.batch_runs_id_seq'));
+	runId := (SELECT nextval('batch_runs_id_seq'));
 	
 	--get the car park tolerance setting
-	carParkTolerance := (SELECT sheffield.getfloatsetting('walk_from_car_park'));
+	carParkTolerance := (SELECT getfloatsetting('walk_from_car_park'));
 	
 	CASE WHEN delayType = 2 THEN 
-			cardelay := (SELECT CAST(val  AS float) FROM sheffield.settings WHERE name = 'car_morning_peak');
-			busdelay := (SELECT CAST(val  AS float) FROM sheffield.settings WHERE name = 'bus_morning_peak');
-			cycledelay := (SELECT CAST(val  AS float) FROM sheffield.settings WHERE name = 'cycle_morning_peak');
-			walkdelay := (SELECT CAST(val  AS float) FROM sheffield.settings WHERE name = 'walk_morning_peak');
+			cardelay := (SELECT CAST(val  AS float) FROM settings WHERE name = 'car_morning_peak');
+			busdelay := (SELECT CAST(val  AS float) FROM settings WHERE name = 'bus_morning_peak');
+			cycledelay := (SELECT CAST(val  AS float) FROM settings WHERE name = 'cycle_morning_peak');
+			walkdelay := (SELECT CAST(val  AS float) FROM settings WHERE name = 'walk_morning_peak');
 			ptRouteStartTime := '16:00:00'::time without time zone;
 			ptRouteEndTime := '18:00:00'::time without time zone;
 			
 		ELSE  
-			cardelay := (SELECT CAST(val  AS float) FROM sheffield.settings WHERE name = 'car_morning_peak');
-			busdelay := (SELECT CAST(val  AS float) FROM sheffield.settings WHERE name = 'bus_morning_peak');
-			cycledelay := (SELECT CAST(val  AS float) FROM sheffield.settings WHERE name = 'cycle_morning_peak');
-			walkdelay := (SELECT CAST(val  AS float) FROM sheffield.settings WHERE name = 'walk_morning_peak');			
+			cardelay := (SELECT CAST(val  AS float) FROM settings WHERE name = 'car_morning_peak');
+			busdelay := (SELECT CAST(val  AS float) FROM settings WHERE name = 'bus_morning_peak');
+			cycledelay := (SELECT CAST(val  AS float) FROM settings WHERE name = 'cycle_morning_peak');
+			walkdelay := (SELECT CAST(val  AS float) FROM settings WHERE name = 'walk_morning_peak');			
 			ptRouteStartTime := '07:00:00'::time without time zone;
 			ptRouteEndTime := '09:00:00'::time without time zone;
 	END CASE;
 	
-	INSERT INTO sheffield.batch_runs (id, batch_id, batchname, batchdescription)
+	INSERT INTO batch_runs (id, batch_id, batchname, batchdescription)
 	SELECT runId, id, name, description
-	FROM sheffield.batches
+	FROM batches
 	WHERE id = batchId;
 	
 	RAISE NOTICE '1.0 Run a simple car route (optimistic about parking)';
 	FOR rec IN
 		SELECT i.id, 
-			nextval('sheffield.batch_run_res_group_id_seq') As group_id,
+			nextval('batch_run_res_group_id_seq') As group_id,
 			i.source, 
 			i.target,
 			i.source_node,
 			i.target_node,
 			i.description,
-			(SELECT id FROM sheffield.ways_clean_vertices_pgr WHERE ST_Equals(the_geom, i.source_node)) AS source_node_id,
-			(SELECT id FROM sheffield.ways_clean_vertices_pgr WHERE ST_Equals(the_geom, i.target_node)) AS target_node_id
-		FROM sheffield.batch_items i
+			(SELECT id FROM ways_clean_vertices_pgr WHERE ST_Equals(the_geom, i.source_node)) AS source_node_id,
+			(SELECT id FROM ways_clean_vertices_pgr WHERE ST_Equals(the_geom, i.target_node)) AS target_node_id
+		FROM batch_items i
 		WHERE i.batch_id = batchId
 	LOOP
 		BEGIN
 			--1.1 Walk to the car
-			subGroupId := nextval('sheffield.batch_run_res_sub_group_id_seq');
+			subGroupId := nextval('batch_run_res_sub_group_id_seq');
 			
 			walktostartlinestring := ST_SetSRID(ST_MakeLine(rec.source, rec.source_node), 27700);
-			walktostartspeed := (SELECT urban_speed FROM sheffield.ways_config WHERE type = 'walk' AND name = 'steps'); --Assume the terrain is "difficult", garden, house etc
+			walktostartspeed := (SELECT urban_speed FROM ways_config WHERE type = 'walk' AND name = 'steps'); --Assume the terrain is "difficult", garden, house etc
 			walktostartlength := ST_Length(walktostartlinestring);
 			
-			walktostartcost := sheffield.calculateCost(walktostartlength, walktostartspeed :: smallint, 0 :: smallint, false, false);
-			walktostartcosttime := sheffield.calculateTimeCost(walktostartlength, walktostartspeed :: smallint);
-			walktostartcostmet := sheffield.getmetcost('met_17250', walktostartcosttime);
+			walktostartcost := calculateCost(walktostartlength, walktostartspeed :: smallint, 0 :: smallint, false, false);
+			walktostartcosttime := calculateTimeCost(walktostartlength, walktostartspeed :: smallint);
+			walktostartcostmet := getmetcost('met_17250', walktostartcosttime);
 			
-			INSERT INTO sheffield.batch_run_res (batch_run_id, batch_item_id, sub_group_id, group_id, group_description, mode, mode_filter, sub_mode_filter,
+			INSERT INTO batch_run_res (batch_run_id, batch_item_id, sub_group_id, group_id, group_description, mode, mode_filter, sub_mode_filter,
 				itemsource, itemtarget, 
 				resseq, resnodeid, resedgeid, rescost, resdelay,  
 				virtual_time_cost, virtual_met_cost, virtual_length_m, virtual_built_up,
@@ -157,7 +157,7 @@ BEGIN
 		EXCEPTION
 			WHEN OTHERS THEN
 				RAISE NOTICE '1.1 % % % %', rec.id, rec.description, SQLERRM, SQLSTATE;
-				INSERT INTO sheffield.batch_run_res (batch_run_id, batch_item_id, group_id, mode, mode_filter, sub_mode_filter,
+				INSERT INTO batch_run_res (batch_run_id, batch_item_id, group_id, mode, mode_filter, sub_mode_filter,
 					itemsource, itemtarget, 
 					errmsg, batch_item_description)
 				SELECT runId, rec.id, rec.group_id, 'walk', 1, 4,
@@ -167,9 +167,9 @@ BEGIN
 		
 		BEGIN 	
 			--1.2 Drive to work
-			subGroupId := nextval('sheffield.batch_run_res_sub_group_id_seq');
+			subGroupId := nextval('batch_run_res_sub_group_id_seq');
 			
-			INSERT INTO sheffield.batch_run_res (batch_run_id, batch_item_id, sub_group_id, group_id, group_description, mode, mode_filter, sub_mode_filter,
+			INSERT INTO batch_run_res (batch_run_id, batch_item_id, sub_group_id, group_id, group_description, mode, mode_filter, sub_mode_filter,
 				itemsource, itemtarget, 
 				resseq, resnodeid, resedgeid, rescost, resdelay, 
 				resgeom, resstreetname, batch_item_description)
@@ -178,16 +178,16 @@ BEGIN
 				trsp.seq, trsp.id1, trsp.id2, trsp.cost, cardelay, 
 				w.geom, w.name, rec.description
 			FROM pgr_trsp(
-        		'SELECT id, source, target, car_cost AS cost, car_reverse_cost AS reverse_cost FROM sheffield.ways_clean',
+        		'SELECT id, source, target, car_cost AS cost, car_reverse_cost AS reverse_cost FROM ways_clean',
     			rec.source_node_id :: int4, rec.target_node_id :: int4,
         		true, true,
-        		'SELECT to_cost, target_id, via_path FROM sheffield.vw_car_restrictions'
+        		'SELECT to_cost, target_id, via_path FROM vw_car_restrictions'
 			) AS trsp
-			LEFT JOIN sheffield.ways_clean w ON trsp.id2 = w.id;
+			LEFT JOIN ways_clean w ON trsp.id2 = w.id;
 		EXCEPTION
 			WHEN OTHERS THEN
 				RAISE NOTICE '1.2 % % % %', rec.id, rec.description, SQLERRM, SQLSTATE;
-				INSERT INTO sheffield.batch_run_res (batch_run_id, batch_item_id, group_id, mode, mode_filter, sub_mode_filter,
+				INSERT INTO batch_run_res (batch_run_id, batch_item_id, group_id, mode, mode_filter, sub_mode_filter,
 					itemsource, itemtarget, 
 					errmsg, batch_item_description)
 				SELECT runId, rec.id, rec.group_id, 'car', 1, 1,
@@ -197,17 +197,17 @@ BEGIN
 		
 		BEGIN
 			--1.3 Walk off the network to target
-			subGroupId := nextval('sheffield.batch_run_res_sub_group_id_seq');
+			subGroupId := nextval('batch_run_res_sub_group_id_seq');
 			
 			walktoendlinestring := ST_SetSRID(ST_MakeLine(rec.target_node, rec.target), 27700);
-			walktoendspeed := (SELECT urban_speed FROM sheffield.ways_config WHERE type = 'walk' AND name = 'steps'); --Assume the terrain is "difficult", garden, house etc
+			walktoendspeed := (SELECT urban_speed FROM ways_config WHERE type = 'walk' AND name = 'steps'); --Assume the terrain is "difficult", garden, house etc
 			walktoendlength := ST_Length(walktoendlinestring);
 			
-			walktoendcost := sheffield.calculateCost(walktoendlength, walktoendspeed :: smallint, 0 :: smallint, false, false);
-			walktoendcosttime := sheffield.calculateTimeCost(walktoendlength, walktoendspeed :: smallint);
-			walktoendcostmet := sheffield.getmetcost('met_17250', walktoendcosttime);
+			walktoendcost := calculateCost(walktoendlength, walktoendspeed :: smallint, 0 :: smallint, false, false);
+			walktoendcosttime := calculateTimeCost(walktoendlength, walktoendspeed :: smallint);
+			walktoendcostmet := getmetcost('met_17250', walktoendcosttime);
 			
-			INSERT INTO sheffield.batch_run_res (batch_run_id, batch_item_id, sub_group_id, group_id, group_description, mode, mode_filter, sub_mode_filter,
+			INSERT INTO batch_run_res (batch_run_id, batch_item_id, sub_group_id, group_id, group_description, mode, mode_filter, sub_mode_filter,
 				itemsource, itemtarget, 
 				resseq, resnodeid, resedgeid, rescost, resdelay, 
 				virtual_time_cost, virtual_met_cost, virtual_length_m, virtual_built_up,
@@ -221,7 +221,7 @@ BEGIN
 		EXCEPTION
 			WHEN OTHERS THEN
 				RAISE NOTICE '1.3 % % % %', rec.id, rec.description, SQLERRM, SQLSTATE;
-				INSERT INTO sheffield.batch_run_res (batch_run_id, batch_item_id, group_id, mode, mode_filter, sub_mode_filter,
+				INSERT INTO batch_run_res (batch_run_id, batch_item_id, group_id, mode, mode_filter, sub_mode_filter,
 					itemsource, itemtarget,  
 					errmsg, batch_item_description)
 				SELECT runId, rec.id, rec.group_id, 'walk', 1, 4,
@@ -234,30 +234,30 @@ BEGIN
 	RAISE NOTICE '2.0 Run a car route (pessimistic about parking), so walking from a car park to the destination';
 	FOR rec IN
 		SELECT i.id, 
-			nextval('sheffield.batch_run_res_group_id_seq') As group_id,
+			nextval('batch_run_res_group_id_seq') As group_id,
 			i.source, 
 			i.target,
 			i.source_node,
 			i.target_node,
 			i.description,
-			(SELECT id FROM sheffield.ways_clean_vertices_pgr WHERE ST_Equals(the_geom, i.source_node)) AS source_node_id,
-			(SELECT id FROM sheffield.ways_clean_vertices_pgr WHERE ST_Equals(the_geom, i.target_node)) AS target_node_id
-		FROM sheffield.batch_items i
+			(SELECT id FROM ways_clean_vertices_pgr WHERE ST_Equals(the_geom, i.source_node)) AS source_node_id,
+			(SELECT id FROM ways_clean_vertices_pgr WHERE ST_Equals(the_geom, i.target_node)) AS target_node_id
+		FROM batch_items i
 		WHERE i.batch_id = batchId
 	LOOP
 		BEGIN
 			--2.1 Walk to the car
-			subGroupId := nextval('sheffield.batch_run_res_sub_group_id_seq');
+			subGroupId := nextval('batch_run_res_sub_group_id_seq');
 			
 			walktostartlinestring := ST_SetSRID(ST_MakeLine(rec.source, rec.source_node), 27700);
-			walktostartspeed := (SELECT urban_speed FROM sheffield.ways_config WHERE type = 'walk' AND name = 'steps'); --Assume the terrain is "difficult", garden, house etc
+			walktostartspeed := (SELECT urban_speed FROM ways_config WHERE type = 'walk' AND name = 'steps'); --Assume the terrain is "difficult", garden, house etc
 			walktostartlength := ST_Length(walktostartlinestring);
 			
-			walktostartcost := sheffield.calculateCost(walktostartlength, walktostartspeed :: smallint, 0 :: smallint, false, false);
-			walktostartcosttime := sheffield.calculateTimeCost(walktostartlength, walktostartspeed :: smallint);
-			walktostartcostmet := sheffield.getmetcost('met_17250', walktostartcosttime);
+			walktostartcost := calculateCost(walktostartlength, walktostartspeed :: smallint, 0 :: smallint, false, false);
+			walktostartcosttime := calculateTimeCost(walktostartlength, walktostartspeed :: smallint);
+			walktostartcostmet := getmetcost('met_17250', walktostartcosttime);
 			
-			INSERT INTO sheffield.batch_run_res (batch_run_id, batch_item_id, sub_group_id, group_id, group_description, mode, mode_filter, sub_mode_filter,
+			INSERT INTO batch_run_res (batch_run_id, batch_item_id, sub_group_id, group_id, group_description, mode, mode_filter, sub_mode_filter,
 				itemsource, itemtarget, 
 				resseq, resnodeid, resedgeid, rescost, resdelay,  
 				virtual_time_cost, virtual_met_cost, virtual_length_m, virtual_built_up,
@@ -271,7 +271,7 @@ BEGIN
 		EXCEPTION
 			WHEN OTHERS THEN
 				RAISE NOTICE '2.1 % % % %', rec.id, rec.description, SQLERRM, SQLSTATE;
-				INSERT INTO sheffield.batch_run_res (batch_run_id, batch_item_id, group_id, mode, mode_filter, sub_mode_filter,
+				INSERT INTO batch_run_res (batch_run_id, batch_item_id, group_id, mode, mode_filter, sub_mode_filter,
 					itemsource, itemtarget,  
 					errmsg, batch_item_description)
 				SELECT runId, rec.id, rec.group_id, 'walk', 2, 4,
@@ -283,25 +283,25 @@ BEGIN
 			--Morning commute? If so use a car park close to the target
 			IF delayType = 1 THEN
 				--2.2 Drive to the car park
-				subGroupId := nextval('sheffield.batch_run_res_sub_group_id_seq');
+				subGroupId := nextval('batch_run_res_sub_group_id_seq');
 
 				--Find the closest car park (within tolerance) to the destination
 				SELECT p.id, e.geom, Coalesce(p.name, '') || ' (Car Park)' AS name INTO carParkId, carParkEntrance, carParkName 
-				FROM sheffield.car_park_entrances e  
-				JOIN sheffield.car_parks p ON p.id = e.car_park_id
-				AND e.id = sheffield.nearestCarParkEntranceToNode( rec.target_node, carParkTolerance);
+				FROM car_park_entrances e  
+				JOIN car_parks p ON p.id = e.car_park_id
+				AND e.id = nearestCarParkEntranceToNode( rec.target_node, carParkTolerance);
 
 				RAISE NOTICE 'Car park: % %', carParkId, carParkName;
 				
 				SELECT id INTO carParkEntranceNodeId
-				FROM sheffield.vw_ways_clean_car_start_end 
+				FROM vw_ways_clean_car_start_end 
 				ORDER BY the_geom <-> carParkEntrance
 				LIMIT 1;
 
 				RAISE NOTICE 'Car park node id: % ', carParkEntranceNodeId;
 				
 				BEGIN								
-					INSERT INTO sheffield.batch_run_res (batch_run_id, batch_item_id, sub_group_id, group_id, group_description, mode, mode_filter, sub_mode_filter,
+					INSERT INTO batch_run_res (batch_run_id, batch_item_id, sub_group_id, group_id, group_description, mode, mode_filter, sub_mode_filter,
 						itemsource, itemtarget,  
 						resseq, resnodeid, resedgeid, rescost, resdelay, 
 						resgeom, resstreetname, batch_item_description)
@@ -310,17 +310,17 @@ BEGIN
 						trsp.seq, trsp.id1, trsp.id2, trsp.cost, cardelay, 
 						w.geom, w.name, rec.description
 					FROM pgr_trsp(
-						'SELECT id, source, target, car_cost AS cost, car_reverse_cost AS reverse_cost FROM sheffield.ways_clean',
+						'SELECT id, source, target, car_cost AS cost, car_reverse_cost AS reverse_cost FROM ways_clean',
 						rec.source_node_id :: int4, carParkEntranceNodeId :: int4,
 						true, true,
-						'SELECT to_cost, target_id, via_path FROM sheffield.vw_car_restrictions'
+						'SELECT to_cost, target_id, via_path FROM vw_car_restrictions'
 					) AS trsp
-					LEFT JOIN sheffield.ways_clean w ON trsp.id2 = w.id;
+					LEFT JOIN ways_clean w ON trsp.id2 = w.id;
 							
 				EXCEPTION
 					WHEN OTHERS THEN
 						RAISE NOTICE '2.2 % % % %', rec.id, rec.description, SQLERRM, SQLSTATE;
-						INSERT INTO sheffield.batch_run_res (batch_run_id, batch_item_id, group_id, mode, mode_filter, sub_mode_filter,
+						INSERT INTO batch_run_res (batch_run_id, batch_item_id, group_id, mode, mode_filter, sub_mode_filter,
 						itemsource, itemtarget,  
 						errmsg, batch_item_description)
 					SELECT runId, rec.id, rec.group_id, 'car', 2, 2, 
@@ -334,19 +334,19 @@ BEGIN
 				
 				BEGIN
 					--2.4 Walk to the destination
-					subGroupId := nextval('sheffield.batch_run_res_sub_group_id_seq');
+					subGroupId := nextval('batch_run_res_sub_group_id_seq');
 					
 					--Find the closest car park entrance to the destination
 					SELECT e.geom INTO carParkExit 
-					FROM sheffield.car_park_entrances e
-					WHERE e.id = sheffield.nearestCarParkFootwayToNode(rec.target_node, carParkId);
+					FROM car_park_entrances e
+					WHERE e.id = nearestCarParkFootwayToNode(rec.target_node, carParkId);
 					
 					SELECT id INTO carParkExitNodeId
-					FROM sheffield.vw_ways_clean_walk_start_end 
+					FROM vw_ways_clean_walk_start_end 
 					ORDER BY the_geom <-> carParkExit
 					LIMIT 1;
 						
-					INSERT INTO sheffield.batch_run_res (batch_run_id, batch_item_id, sub_group_id, group_id, group_description, mode, mode_filter, sub_mode_filter,
+					INSERT INTO batch_run_res (batch_run_id, batch_item_id, sub_group_id, group_id, group_description, mode, mode_filter, sub_mode_filter,
 						itemsource, itemtarget,  
 						resseq, resnodeid, resedgeid, rescost, resdelay, 
 						resgeom, resstreetname, batch_item_description)
@@ -355,15 +355,15 @@ BEGIN
 						trsp.seq, trsp.id1, trsp.id2, trsp.cost, walkdelay, 
 						w.geom, w.name, rec.description
 					FROM pgr_trsp(
-						'SELECT id, source, target, walk_cost AS cost, walk_reverse_cost AS reverse_cost FROM sheffield.ways_clean',
+						'SELECT id, source, target, walk_cost AS cost, walk_reverse_cost AS reverse_cost FROM ways_clean',
 						carParkExitNodeId :: int4, rec.target_node_id :: int4,
 						true, true
 					) AS trsp
-					LEFT JOIN sheffield.ways_clean w ON trsp.id2 = w.id;
+					LEFT JOIN ways_clean w ON trsp.id2 = w.id;
 				EXCEPTION
 					WHEN OTHERS THEN
 						RAISE NOTICE '2.4 % % % %', rec.id, rec.description, SQLERRM, SQLSTATE;
-						INSERT INTO sheffield.batch_run_res (batch_run_id, batch_item_id, group_id, mode, mode_filter,
+						INSERT INTO batch_run_res (batch_run_id, batch_item_id, group_id, mode, mode_filter,
 							itemsource, itemtarget, 
 							errmsg, batch_item_description)
 						SELECT runId, rec.id, rec.group_id, 'walk', 2,
@@ -374,19 +374,19 @@ BEGIN
 				--Returning home, therefore walk to the car park first
 				BEGIN
 					--2.2 Walk to the destination
-					subGroupId := nextval('sheffield.batch_run_res_sub_group_id_seq');
+					subGroupId := nextval('batch_run_res_sub_group_id_seq');
 					
 					--Find the closest car park entrance to the destination
 					SELECT e.geom INTO carParkExit 
-					FROM sheffield.car_park_entrances e
-					WHERE e.id = sheffield.nearestCarParkFootwayToNode(rec.source_node, carParkId);
+					FROM car_park_entrances e
+					WHERE e.id = nearestCarParkFootwayToNode(rec.source_node, carParkId);
 					
 					SELECT id INTO carParkExitNodeId
-					FROM sheffield.vw_ways_clean_walk_start_end 
+					FROM vw_ways_clean_walk_start_end 
 					ORDER BY the_geom <-> carParkExit
 					LIMIT 1;
 						
-					INSERT INTO sheffield.batch_run_res (batch_run_id, batch_item_id, sub_group_id, group_id, group_description, mode, mode_filter, sub_mode_filter,
+					INSERT INTO batch_run_res (batch_run_id, batch_item_id, sub_group_id, group_id, group_description, mode, mode_filter, sub_mode_filter,
 						itemsource, itemtarget,  
 						resseq, resnodeid, resedgeid, rescost, resdelay, 
 						resgeom, resstreetname, batch_item_description)
@@ -395,15 +395,15 @@ BEGIN
 						trsp.seq, trsp.id1, trsp.id2, trsp.cost, walkdelay, 
 						w.geom, w.name, rec.description
 					FROM pgr_trsp(
-						'SELECT id, source, target, walk_cost AS cost, walk_reverse_cost AS reverse_cost FROM sheffield.ways_clean',
+						'SELECT id, source, target, walk_cost AS cost, walk_reverse_cost AS reverse_cost FROM ways_clean',
 						rec.source_node_id :: int4, carParkExitNodeId :: int4,
 						true, true
 					) AS trsp
-					LEFT JOIN sheffield.ways_clean w ON trsp.id2 = w.id;
+					LEFT JOIN ways_clean w ON trsp.id2 = w.id;
 				EXCEPTION
 					WHEN OTHERS THEN
 						RAISE NOTICE '2.4 % % % %', rec.id, rec.description, SQLERRM, SQLSTATE;
-						INSERT INTO sheffield.batch_run_res (batch_run_id, batch_item_id, group_id, mode, mode_filter,
+						INSERT INTO batch_run_res (batch_run_id, batch_item_id, group_id, mode, mode_filter,
 							itemsource, itemtarget, 
 							errmsg, batch_item_description)
 						SELECT runId, rec.id, rec.group_id, 'walk', 2,
@@ -417,25 +417,25 @@ BEGIN
 
 				
 				--2.4 Drive to the car park
-				subGroupId := nextval('sheffield.batch_run_res_sub_group_id_seq');
+				subGroupId := nextval('batch_run_res_sub_group_id_seq');
 
 				--Find the closest car park (within tolerance) to the destination
 				SELECT p.id, e.geom, Coalesce(p.name, '') || ' (Car Park)' AS name INTO carParkId, carParkEntrance, carParkName 
-				FROM sheffield.car_park_entrances e  
-				JOIN sheffield.car_parks p ON p.id = e.car_park_id
-				AND e.id = sheffield.nearestCarParkEntranceToNode(rec.source_node, carParkTolerance);
+				FROM car_park_entrances e  
+				JOIN car_parks p ON p.id = e.car_park_id
+				AND e.id = nearestCarParkEntranceToNode(rec.source_node, carParkTolerance);
 
 				RAISE NOTICE 'Car park: % %', carParkId, carParkName;
 				
 				SELECT id INTO carParkEntranceNodeId
-				FROM sheffield.vw_ways_clean_car_start_end 
+				FROM vw_ways_clean_car_start_end 
 				ORDER BY the_geom <-> carParkEntrance
 				LIMIT 1;
 
 				RAISE NOTICE 'Car park node id: % ', carParkEntranceNodeId;
 				
 				BEGIN								
-					INSERT INTO sheffield.batch_run_res (batch_run_id, batch_item_id, sub_group_id, group_id, group_description, mode, mode_filter, sub_mode_filter,
+					INSERT INTO batch_run_res (batch_run_id, batch_item_id, sub_group_id, group_id, group_description, mode, mode_filter, sub_mode_filter,
 						itemsource, itemtarget,  
 						resseq, resnodeid, resedgeid, rescost, resdelay, 
 						resgeom, resstreetname, batch_item_description)
@@ -444,17 +444,17 @@ BEGIN
 						trsp.seq, trsp.id1, trsp.id2, trsp.cost, cardelay, 
 						w.geom, w.name, rec.description
 					FROM pgr_trsp(
-						'SELECT id, source, target, car_cost AS cost, car_reverse_cost AS reverse_cost FROM sheffield.ways_clean',
+						'SELECT id, source, target, car_cost AS cost, car_reverse_cost AS reverse_cost FROM ways_clean',
 						carParkEntranceNodeId :: int4, rec.target_node_id :: int4, 
 						true, true,
-						'SELECT to_cost, target_id, via_path FROM sheffield.vw_car_restrictions'
+						'SELECT to_cost, target_id, via_path FROM vw_car_restrictions'
 					) AS trsp
-					LEFT JOIN sheffield.ways_clean w ON trsp.id2 = w.id;
+					LEFT JOIN ways_clean w ON trsp.id2 = w.id;
 							
 				EXCEPTION
 					WHEN OTHERS THEN
 						RAISE NOTICE '2.2 % % % %', rec.id, rec.description, SQLERRM, SQLSTATE;
-						INSERT INTO sheffield.batch_run_res (batch_run_id, batch_item_id, group_id, mode, mode_filter, sub_mode_filter,
+						INSERT INTO batch_run_res (batch_run_id, batch_item_id, group_id, mode, mode_filter, sub_mode_filter,
 						itemsource, itemtarget,  
 						errmsg, batch_item_description)
 					SELECT runId, rec.id, rec.group_id, 'car', 2, 2, 
@@ -468,17 +468,17 @@ BEGIN
 	
 		BEGIN
 			--2.5 Walk off the network to target
-			subGroupId := nextval('sheffield.batch_run_res_sub_group_id_seq');
+			subGroupId := nextval('batch_run_res_sub_group_id_seq');
 			
 			walktoendlinestring := ST_SetSRID(ST_MakeLine(rec.target_node, rec.target), 27700);
-			walktoendspeed := (SELECT urban_speed FROM sheffield.ways_config WHERE type = 'walk' AND name = 'steps'); --Assume the terrain is "difficult", garden, house etc
+			walktoendspeed := (SELECT urban_speed FROM ways_config WHERE type = 'walk' AND name = 'steps'); --Assume the terrain is "difficult", garden, house etc
 			walktoendlength := ST_Length(walktoendlinestring);
 			
-			walktoendcost := sheffield.calculateCost(walktoendlength, walktoendspeed :: smallint, 0 :: smallint, false, false);
-			walktoendcosttime := sheffield.calculateTimeCost(walktoendlength, walktoendspeed :: smallint);
-			walktoendcostmet := sheffield.getmetcost('met_17250', walktoendcosttime);
+			walktoendcost := calculateCost(walktoendlength, walktoendspeed :: smallint, 0 :: smallint, false, false);
+			walktoendcosttime := calculateTimeCost(walktoendlength, walktoendspeed :: smallint);
+			walktoendcostmet := getmetcost('met_17250', walktoendcosttime);
 			
-			INSERT INTO sheffield.batch_run_res (batch_run_id, batch_item_id, sub_group_id, group_id, group_description, mode, mode_filter,
+			INSERT INTO batch_run_res (batch_run_id, batch_item_id, sub_group_id, group_id, group_description, mode, mode_filter,
 				itemsource, itemtarget,  
 				resseq, resnodeid, resedgeid, rescost, resdelay, 
 				virtual_time_cost, virtual_met_cost, virtual_length_m, virtual_built_up,
@@ -492,7 +492,7 @@ BEGIN
 		EXCEPTION
 			WHEN OTHERS THEN
 				RAISE NOTICE '2.5 % % % %', rec.id, rec.description, SQLERRM, SQLSTATE;
-				INSERT INTO sheffield.batch_run_res (batch_run_id, batch_item_id, group_id, mode, mode_filter,
+				INSERT INTO batch_run_res (batch_run_id, batch_item_id, group_id, mode, mode_filter,
 					itemsource, itemtarget,  
 					errmsg, batch_item_description)
 				SELECT runId, rec.id, rec.group_id, 'walk', 2,
@@ -506,30 +506,30 @@ BEGIN
 	RAISE NOTICE '3.0 Cycle to the destination';
 	FOR rec IN
 		SELECT i.id, 
-			nextval('sheffield.batch_run_res_group_id_seq') As group_id,
+			nextval('batch_run_res_group_id_seq') As group_id,
 			i.source, 
 			i.target,
 			i.source_node,
 			i.target_node,
 			i.description,
-			(SELECT id FROM sheffield.ways_clean_vertices_pgr WHERE ST_Equals(the_geom, i.source_node)) AS source_node_id,
-			(SELECT id FROM sheffield.ways_clean_vertices_pgr WHERE ST_Equals(the_geom, i.target_node)) AS target_node_id
-		FROM sheffield.batch_items i
+			(SELECT id FROM ways_clean_vertices_pgr WHERE ST_Equals(the_geom, i.source_node)) AS source_node_id,
+			(SELECT id FROM ways_clean_vertices_pgr WHERE ST_Equals(the_geom, i.target_node)) AS target_node_id
+		FROM batch_items i
 		WHERE i.batch_id = batchId
 	LOOP
 		BEGIN
 			--3.1 Walk to the bike path
-			subGroupId := nextval('sheffield.batch_run_res_sub_group_id_seq');
+			subGroupId := nextval('batch_run_res_sub_group_id_seq');
 			
 			walktostartlinestring := ST_SetSRID(ST_MakeLine(rec.source, rec.source_node), 27700);
-			walktostartspeed := (SELECT urban_speed FROM sheffield.ways_config WHERE type = 'walk' AND name = 'steps'); --Assume the terrain is "difficult", garden, house etc
+			walktostartspeed := (SELECT urban_speed FROM ways_config WHERE type = 'walk' AND name = 'steps'); --Assume the terrain is "difficult", garden, house etc
 			walktostartlength := ST_Length(walktostartlinestring);
 			
-			walktostartcost := sheffield.calculateCost(walktostartlength, walktostartspeed :: smallint, 0 :: smallint, false, false);
-			walktostartcosttime := sheffield.calculateTimeCost(walktostartlength, walktostartspeed :: smallint);
-			walktostartcostmet := sheffield.getmetcost('met_17250', walktostartcosttime);
+			walktostartcost := calculateCost(walktostartlength, walktostartspeed :: smallint, 0 :: smallint, false, false);
+			walktostartcosttime := calculateTimeCost(walktostartlength, walktostartspeed :: smallint);
+			walktostartcostmet := getmetcost('met_17250', walktostartcosttime);
 			
-			INSERT INTO sheffield.batch_run_res (batch_run_id, batch_item_id, sub_group_id, group_id, group_description, mode, mode_filter, sub_mode_filter,
+			INSERT INTO batch_run_res (batch_run_id, batch_item_id, sub_group_id, group_id, group_description, mode, mode_filter, sub_mode_filter,
 				itemsource, itemtarget, 
 				resseq, resnodeid, resedgeid, rescost, resdelay,  
 				virtual_time_cost, virtual_met_cost, virtual_length_m, virtual_built_up,
@@ -543,7 +543,7 @@ BEGIN
 		EXCEPTION
 			WHEN OTHERS THEN
 				RAISE NOTICE '3.1 % % % %', rec.id, rec.description, SQLERRM, SQLSTATE;
-				INSERT INTO sheffield.batch_run_res (batch_run_id, batch_item_id, group_id, mode, sub_mode_filter,
+				INSERT INTO batch_run_res (batch_run_id, batch_item_id, group_id, mode, sub_mode_filter,
 					itemsource, itemtarget,  
 					errmsg, batch_item_description)
 				SELECT runId, rec.id, rec.group_id, 'walk', 3, 4,
@@ -553,9 +553,9 @@ BEGIN
 		
 		BEGIN
 			--3.2 Bike to the destination
-			subGroupId := nextval('sheffield.batch_run_res_sub_group_id_seq');
+			subGroupId := nextval('batch_run_res_sub_group_id_seq');
 			
-			INSERT INTO sheffield.batch_run_res (batch_run_id, batch_item_id, sub_group_id, group_id, group_description, mode, mode_filter, sub_mode_filter,
+			INSERT INTO batch_run_res (batch_run_id, batch_item_id, sub_group_id, group_id, group_description, mode, mode_filter, sub_mode_filter,
 				itemsource, itemtarget, 
 				resseq, resnodeid, resedgeid, rescost, resdelay, 
 				resgeom, resstreetname, batch_item_description)
@@ -564,16 +564,16 @@ BEGIN
 				trsp.seq, trsp.id1, trsp.id2, trsp.cost, cycledelay, 
 				w.geom, w.name, rec.description
 			FROM pgr_trsp(
-        		'SELECT id, source, target, cycle_cost AS cost, cycle_reverse_cost AS reverse_cost FROM sheffield.ways_clean',
+        		'SELECT id, source, target, cycle_cost AS cost, cycle_reverse_cost AS reverse_cost FROM ways_clean',
     			rec.source_node_id :: int4, rec.target_node_id :: int4,
         		true, true,
-        		'SELECT to_cost, target_id, via_path FROM sheffield.vw_bicycle_restrictions'
+        		'SELECT to_cost, target_id, via_path FROM vw_bicycle_restrictions'
 			) AS trsp
-			LEFT JOIN sheffield.ways_clean w ON trsp.id2 = w.id;
+			LEFT JOIN ways_clean w ON trsp.id2 = w.id;
 		EXCEPTION
 			WHEN OTHERS THEN
 				RAISE NOTICE '3.2 % % % %', rec.id, rec.description, SQLERRM, SQLSTATE;
-				INSERT INTO sheffield.batch_run_res (batch_run_id, batch_item_id, group_id, mode, mode_filter, sub_mode_filter,
+				INSERT INTO batch_run_res (batch_run_id, batch_item_id, group_id, mode, mode_filter, sub_mode_filter,
 					itemsource, itemtarget,  
 					errmsg, batch_item_description)
 				SELECT runId, rec.id, rec.group_id, 'cycle', 3, 3,
@@ -583,17 +583,17 @@ BEGIN
 
 		BEGIN
 			--3.3 Walk off the network to target
-			subGroupId := nextval('sheffield.batch_run_res_sub_group_id_seq');
+			subGroupId := nextval('batch_run_res_sub_group_id_seq');
 			
 			walktoendlinestring := ST_SetSRID(ST_MakeLine(rec.target_node, rec.target), 27700);
-			walktoendspeed := (SELECT urban_speed FROM sheffield.ways_config WHERE type = 'walk' AND name = 'steps'); --Assume the terrain is "difficult", garden, house etc
+			walktoendspeed := (SELECT urban_speed FROM ways_config WHERE type = 'walk' AND name = 'steps'); --Assume the terrain is "difficult", garden, house etc
 			walktoendlength := ST_Length(walktoendlinestring);
 			
-			walktoendcost := sheffield.calculateCost(walktoendlength, walktoendspeed :: smallint, 0 :: smallint, false, false);
-			walktoendcosttime := sheffield.calculateTimeCost(walktoendlength, walktoendspeed :: smallint);
-			walktoendcostmet := sheffield.getmetcost('met_17250', walktoendcosttime);
+			walktoendcost := calculateCost(walktoendlength, walktoendspeed :: smallint, 0 :: smallint, false, false);
+			walktoendcosttime := calculateTimeCost(walktoendlength, walktoendspeed :: smallint);
+			walktoendcostmet := getmetcost('met_17250', walktoendcosttime);
 			
-			INSERT INTO sheffield.batch_run_res (batch_run_id, batch_item_id, sub_group_id, group_id, group_description, mode, mode_filter, sub_mode_filter,
+			INSERT INTO batch_run_res (batch_run_id, batch_item_id, sub_group_id, group_id, group_description, mode, mode_filter, sub_mode_filter,
 				itemsource, itemtarget, 
 				resseq, resnodeid, resedgeid, rescost, resdelay, 
 				virtual_time_cost, virtual_met_cost, virtual_length_m, virtual_built_up,
@@ -607,7 +607,7 @@ BEGIN
 		EXCEPTION
 			WHEN OTHERS THEN
 				RAISE NOTICE '3.3 % % % %', rec.id, rec.description, SQLERRM, SQLSTATE;
-				INSERT INTO sheffield.batch_run_res (batch_run_id, batch_item_id, group_id, mode, mode_filter, sub_mode_filter,
+				INSERT INTO batch_run_res (batch_run_id, batch_item_id, group_id, mode, mode_filter, sub_mode_filter,
 					itemsource, itemtarget,  
 					errmsg, batch_item_description)
 				SELECT runId, rec.id, rec.group_id, 'walk', 3, 4,
@@ -621,30 +621,30 @@ BEGIN
 	RAISE NOTICE '4.0 Walk to the destination';
 	FOR rec IN
 		SELECT i.id, 
-			nextval('sheffield.batch_run_res_group_id_seq') As group_id,
+			nextval('batch_run_res_group_id_seq') As group_id,
 			i.source, 
 			i.target,
 			i.source_node,
 			i.target_node,
 			i.description,
-			(SELECT id FROM sheffield.ways_clean_vertices_pgr WHERE ST_Equals(the_geom, i.source_node)) AS source_node_id,
-			(SELECT id FROM sheffield.ways_clean_vertices_pgr WHERE ST_Equals(the_geom, i.target_node)) AS target_node_id
-		FROM sheffield.batch_items i
+			(SELECT id FROM ways_clean_vertices_pgr WHERE ST_Equals(the_geom, i.source_node)) AS source_node_id,
+			(SELECT id FROM ways_clean_vertices_pgr WHERE ST_Equals(the_geom, i.target_node)) AS target_node_id
+		FROM batch_items i
 		WHERE i.batch_id = batchId
 	LOOP
 		BEGIN
 			--4.1 Walk to the path
-			subGroupId := nextval('sheffield.batch_run_res_sub_group_id_seq');
+			subGroupId := nextval('batch_run_res_sub_group_id_seq');
 			
 			walktostartlinestring := ST_SetSRID(ST_MakeLine(rec.source, rec.source_node), 27700);
-			walktostartspeed := (SELECT urban_speed FROM sheffield.ways_config WHERE type = 'walk' AND name = 'steps'); --Assume the terrain is "difficult", garden, house etc
+			walktostartspeed := (SELECT urban_speed FROM ways_config WHERE type = 'walk' AND name = 'steps'); --Assume the terrain is "difficult", garden, house etc
 			walktostartlength := ST_Length(walktostartlinestring);
 			
-			walktostartcost := sheffield.calculateCost(walktostartlength, walktostartspeed :: smallint, 0 :: smallint, false, false);
-			walktostartcosttime := sheffield.calculateTimeCost(walktostartlength, walktostartspeed :: smallint);
-			walktostartcostmet := sheffield.getmetcost('met_17250', walktostartcosttime);
+			walktostartcost := calculateCost(walktostartlength, walktostartspeed :: smallint, 0 :: smallint, false, false);
+			walktostartcosttime := calculateTimeCost(walktostartlength, walktostartspeed :: smallint);
+			walktostartcostmet := getmetcost('met_17250', walktostartcosttime);
 			
-			INSERT INTO sheffield.batch_run_res (batch_run_id, batch_item_id, sub_group_id, group_id, group_description, mode, mode_filter, sub_mode_filter,
+			INSERT INTO batch_run_res (batch_run_id, batch_item_id, sub_group_id, group_id, group_description, mode, mode_filter, sub_mode_filter,
 				itemsource, itemtarget,  
 				resseq, resnodeid, resedgeid, rescost, resdelay,  
 				virtual_time_cost, virtual_met_cost, virtual_length_m, virtual_built_up,
@@ -658,7 +658,7 @@ BEGIN
 		EXCEPTION
 			WHEN OTHERS THEN
 				RAISE NOTICE '4.1 % % % %', rec.id, rec.description, SQLERRM, SQLSTATE;
-				INSERT INTO sheffield.batch_run_res (batch_run_id, batch_item_id, group_id, mode, mode_filter, sub_mode_filter,
+				INSERT INTO batch_run_res (batch_run_id, batch_item_id, group_id, mode, mode_filter, sub_mode_filter,
 					itemsource, itemtarget, 
 					errmsg, batch_item_description)
 				SELECT runId, rec.id, rec.group_id, 'walk', 4, 4,
@@ -668,9 +668,9 @@ BEGIN
 		
 		BEGIN
 			--4.2 Walk to the destination
-			subGroupId := nextval('sheffield.batch_run_res_sub_group_id_seq');
+			subGroupId := nextval('batch_run_res_sub_group_id_seq');
 			
-			INSERT INTO sheffield.batch_run_res (batch_run_id, batch_item_id, sub_group_id, group_id, group_description, mode, mode_filter, sub_mode_filter,
+			INSERT INTO batch_run_res (batch_run_id, batch_item_id, sub_group_id, group_id, group_description, mode, mode_filter, sub_mode_filter,
 				itemsource, itemtarget, 
 				resseq, resnodeid, resedgeid, rescost, resdelay, 
 				resgeom, resstreetname, batch_item_description)
@@ -679,15 +679,15 @@ BEGIN
 				trsp.seq, trsp.id1, trsp.id2, trsp.cost, walkdelay, 
 				w.geom, w.name, rec.description
 			FROM pgr_trsp(
-        		'SELECT id, source, target, walk_cost AS cost, walk_reverse_cost AS reverse_cost FROM sheffield.ways_clean',
+        		'SELECT id, source, target, walk_cost AS cost, walk_reverse_cost AS reverse_cost FROM ways_clean',
 			rec.source_node_id :: int4, rec.target_node_id :: int4,
         		true, true
 			) AS trsp
-			LEFT JOIN sheffield.ways_clean w ON trsp.id2 = w.id;
+			LEFT JOIN ways_clean w ON trsp.id2 = w.id;
 		EXCEPTION
 			WHEN OTHERS THEN
 				RAISE NOTICE '4.2 % % % %', rec.id, rec.description, SQLERRM, SQLSTATE;
-				INSERT INTO sheffield.batch_run_res (batch_run_id, batch_item_id, group_id, mode, mode_filter, sub_mode_filter,
+				INSERT INTO batch_run_res (batch_run_id, batch_item_id, group_id, mode, mode_filter, sub_mode_filter,
 					itemsource, itemtarget, 
 					errmsg, batch_item_description)
 				SELECT runId, rec.id, rec.group_id, 'walk', 4, 4,
@@ -697,17 +697,17 @@ BEGIN
 		
 		BEGIN
 			--4.3 Walk off the network to target
-			subGroupId := nextval('sheffield.batch_run_res_sub_group_id_seq');
+			subGroupId := nextval('batch_run_res_sub_group_id_seq');
 						
 			walktoendlinestring := ST_SetSRID(ST_MakeLine(rec.target_node, rec.target), 27700);
-			walktoendspeed := (SELECT urban_speed FROM sheffield.ways_config WHERE type = 'walk' AND name = 'steps'); --Assume the terrain is "difficult", garden, house etc
+			walktoendspeed := (SELECT urban_speed FROM ways_config WHERE type = 'walk' AND name = 'steps'); --Assume the terrain is "difficult", garden, house etc
 			walktoendlength := ST_Length(walktoendlinestring);
 			
-			walktoendcost := sheffield.calculateCost(walktoendlength, walktoendspeed :: smallint, 0 :: smallint, false, false);
-			walktoendcosttime := sheffield.calculateTimeCost(walktoendlength, walktoendspeed :: smallint);
-			walktoendcostmet := sheffield.getmetcost('met_17250', walktoendcosttime);
+			walktoendcost := calculateCost(walktoendlength, walktoendspeed :: smallint, 0 :: smallint, false, false);
+			walktoendcosttime := calculateTimeCost(walktoendlength, walktoendspeed :: smallint);
+			walktoendcostmet := getmetcost('met_17250', walktoendcosttime);
 			
-			INSERT INTO sheffield.batch_run_res (batch_run_id, batch_item_id, sub_group_id, group_id, group_description, mode, mode_filter, sub_mode_filter,
+			INSERT INTO batch_run_res (batch_run_id, batch_item_id, sub_group_id, group_id, group_description, mode, mode_filter, sub_mode_filter,
 				itemsource, itemtarget, 
 				resseq, resnodeid, resedgeid, rescost, resdelay, 
 				virtual_time_cost, virtual_met_cost, virtual_length_m, virtual_built_up,
@@ -721,7 +721,7 @@ BEGIN
 		EXCEPTION
 			WHEN OTHERS THEN
 				RAISE NOTICE '4.3 % % % %', rec.id, rec.description, SQLERRM, SQLSTATE;
-				INSERT INTO sheffield.batch_run_res (batch_run_id, batch_item_id, group_id, mode, mode_filter, sub_mode_filter,
+				INSERT INTO batch_run_res (batch_run_id, batch_item_id, group_id, mode, mode_filter, sub_mode_filter,
 					itemsource, itemtarget,  
 					errmsg, batch_item_description)
 				SELECT runId, rec.id, rec.group_id, 'walk', 4, 4,
@@ -749,25 +749,25 @@ BEGIN
 	CREATE TEMPORARY TABLE tmp_final (LIKE tmp_result);
 
 	--Get a few settings
-	ptDistanceReq := sheffield.getFloatSetting('public_transport_distance_requirement');
-	ptSourceStopLimit := sheffield.getIntegerSetting('public_transport_source_stop_limit');
-	ptTargetStopLimit := sheffield.getIntegerSetting('public_transport_target_stop_limit');
-	ptMaxCostLimit := sheffield.getIntegerSetting('public_transport_max_cost_limit');
-	ptRouteDirTolerance := sheffield.getIntegerSetting('public_transport_route_direction_tolerance');
+	ptDistanceReq := getFloatSetting('public_transport_distance_requirement');
+	ptSourceStopLimit := getIntegerSetting('public_transport_source_stop_limit');
+	ptTargetStopLimit := getIntegerSetting('public_transport_target_stop_limit');
+	ptMaxCostLimit := getIntegerSetting('public_transport_max_cost_limit');
+	ptRouteDirTolerance := getIntegerSetting('public_transport_route_direction_tolerance');
 		
 	--Now loop through the batch items and solve paths
 	FOR rec IN
 		SELECT i.id, 
-			nextval('sheffield.batch_run_res_group_id_seq') As group_id,
+			nextval('batch_run_res_group_id_seq') As group_id,
 			i.source, 
 			i.target,
 			i.source_node,
 			i.target_node,
 			i.description,
-			(SELECT id FROM sheffield.ways_clean_vertices_pgr WHERE ST_Equals(the_geom, i.source_node)) AS source_node_id,
-			(SELECT id FROM sheffield.ways_clean_vertices_pgr WHERE ST_Equals(the_geom, i.target_node)) AS target_node_id,
+			(SELECT id FROM ways_clean_vertices_pgr WHERE ST_Equals(the_geom, i.source_node)) AS source_node_id,
+			(SELECT id FROM ways_clean_vertices_pgr WHERE ST_Equals(the_geom, i.target_node)) AS target_node_id,
 			i.import_census_id
-		FROM sheffield.batch_items i
+		FROM batch_items i
 		WHERE i.batch_id = batchId
 	LOOP
 		BEGIN
@@ -788,11 +788,11 @@ BEGIN
 			--Use a straight line, instead of the actual network, and a simple 20kmh speed. Public transport would not be able to travel 
 			--in a straight line, and also has to stop to collect/drop off passengers.
 			--Using this rule of thumb filters out any stupidly short transfers.
- 			ptRouteTimeFilter := sheffield.calculateTimeCost(ST_Length(ST_MakeLine(rec.source, rec.target)), sheffield.getIntegerSetting('public_transport_direct_speed_limit') :: smallint);
+ 			ptRouteTimeFilter := calculateTimeCost(ST_Length(ST_MakeLine(rec.source, rec.target)), getIntegerSetting('public_transport_direct_speed_limit') :: smallint);
 
 			SELECT SUM(COALESCE(r.rescost, 0)) INTO ptRouteTimeFilter
-			FROM sheffield.batch_run_res r
-			LEFT JOIN sheffield.batch_items i ON i.id = r.batch_item_id
+			FROM batch_run_res r
+			LEFT JOIN batch_items i ON i.id = r.batch_item_id
 			WHERE r.mode_filter = 6 
 			AND r.sub_mode_filter = 6
 			AND i.import_census_id = rec.import_census_id;
@@ -802,19 +802,19 @@ BEGIN
 			(
 				SELECT s.id, s.cluster_id, s.geom, s.name, s.type, s.naptan,
 					ST_Distance(s.geom, rec.source) AS stop_distance
-				FROM sheffield.public_transport_stops s
+				FROM public_transport_stops s
 				WHERE ST_DWithin(s.geom, rec.source, 1000) = true
 				ORDER BY s.import_geom <-> rec.source
 				LIMIT ptSourceStopLimit
 			)
 			INSERT INTO tmp_sources (id, public_transport_route_id, source_public_transport_stop_id, stop_time, vehicle_journey_code, source, geom, way, distance)
 			SELECT t.id, t.public_transport_route_id, t.source_public_transport_stop_id, t.stop_time, t.vehicle_journey_code, t.source, s.geom, t.geom, x.stop_distance
-			FROM sheffield.public_transport_route_times t
-			JOIN sheffield.public_transport_stops s ON s.id = t.source_public_transport_stop_id 
+			FROM public_transport_route_times t
+			JOIN public_transport_stops s ON s.id = t.source_public_transport_stop_id 
 			JOIN x ON x.id = t.source_public_transport_stop_id 
 			WHERE t.transport_mode IN ('bus', 'train', 'tram')
 			AND (t.stop_time > ptRouteStartTime AND t.stop_time < ptRouteEndTime)
-			AND sheffield.isAngleWithinTolerence(t.route_direction :: integer, ptRouteTravelDirection :: integer, ptRouteDirTolerance)
+			AND isAngleWithinTolerence(t.route_direction :: integer, ptRouteTravelDirection :: integer, ptRouteDirTolerance)
 			ORDER BY x.stop_distance, t.stop_time
 			LIMIT ptSourceStopLimit;
 			
@@ -823,7 +823,7 @@ BEGIN
 			
 			IF ptSourceStopCount = 0 THEN
 				RAISE NOTICE '6.0 % % No public transport stops found near the source', rec.id, rec.description;
-				INSERT INTO sheffield.batch_run_res 
+				INSERT INTO batch_run_res 
 				(batch_run_id, batch_item_id, group_id, mode, mode_filter, sub_mode_filter,	itemsource, itemtarget, errmsg, batch_item_description)
 				SELECT runId, rec.id, rec.group_id, 'public transport', 6, 6, rec.source, rec.target, '6.0 No public transport stops found near the source', rec.description;
 			ELSE
@@ -832,7 +832,7 @@ BEGIN
 				(
 					SELECT s.id, s.cluster_id, s.geom, s.name, s.type, s.naptan, 
 						ST_Distance(s.geom, rec.target) AS stop_distance
-					FROM sheffield.public_transport_stops s
+					FROM public_transport_stops s
 					WHERE ST_DWithin(s.geom, rec.target, 1000) = true
 					ORDER BY s.import_geom <-> rec.target
 					LIMIT ptTargetStopLimit
@@ -840,20 +840,20 @@ BEGIN
 				y AS (
 					SELECT DISTINCT l.lvl, v.id, v.public_transport_route_id, v.source_public_transport_stop_id, v.stop_time, v.source, v.geom, v.way, v.distance, l.parent_vehicle_journey_code, l.vehicle_journey_code 
 					FROM tmp_sources v 
-					LEFT JOIN sheffield.public_transport_links2 l ON l.parent_vehicle_journey_code = v.vehicle_journey_code
+					LEFT JOIN public_transport_links2 l ON l.parent_vehicle_journey_code = v.vehicle_journey_code
 				)
 				INSERT INTO tmp_routes (source_distance, target_distance, overall_distance, source_stop_time, target_stop_time, overall_time, source, source_journey_code, source_geom, source_way, target, target_journey_code, target_geom, target_way)
 				SELECT y.distance, x.stop_distance, (x.stop_distance + y.distance), y.stop_time AS source_stop_time, 
 					t.stop_time, (t.stop_time - y.stop_time), y.source, y.parent_vehicle_journey_code AS source_journey_code, y.geom AS source_geom, y.way AS source_way,
 					t.target, t.vehicle_journey_code AS target_journey_code, s.geom AS target_geom, t.geom As target_way
-				FROM sheffield.public_transport_route_times t
-				JOIN sheffield.public_transport_stops s ON s.id = t.target_public_transport_stop_id
+				FROM public_transport_route_times t
+				JOIN public_transport_stops s ON s.id = t.target_public_transport_stop_id
 				JOIN x ON x.id = t.target_public_transport_stop_id
 				LEFT JOIN y ON t.vehicle_journey_code = y.vehicle_journey_code
 				WHERE t.transport_mode IN ('bus', 'train', 'tram')
 				AND (t.stop_time > ptRouteStartTime AND t.stop_time < ptRouteEndTime)
 				AND t.stop_time > y.stop_time + ((ptRouteTimeFilter - 300) * '1 second' :: interval) --(4500 * '1 second' :: interval) --No stupidly short times please 
-				AND sheffield.isAngleWithinTolerence(t.route_direction :: integer, ptRouteTravelDirection :: integer, ptRouteDirTolerance)
+				AND isAngleWithinTolerence(t.route_direction :: integer, ptRouteTravelDirection :: integer, ptRouteDirTolerance)
 				ORDER BY
 					--For changes add an extra 300 seconds (5 minutes)
 					--Add the Euclidean distances to the source and target stops together and work out time in seconds moving 1m/s
@@ -865,7 +865,7 @@ BEGIN
 				
 				IF ptTargetStopCount = 0 THEN
 					RAISE NOTICE '6.0 % % No potential public transport routes found', rec.id, rec.description;
-					INSERT INTO sheffield.batch_run_res 
+					INSERT INTO batch_run_res 
 					(batch_run_id, batch_item_id, group_id, mode, mode_filter, sub_mode_filter, itemsource, itemtarget,  errmsg, batch_item_description)
 					SELECT runId, rec.id, rec.group_id, 'public transport', 6, 6, rec.source, rec.target, '6.0 No potential public transport routes found', rec.description;
 				ELSE
@@ -886,17 +886,17 @@ BEGIN
 							itemsource, itemtarget, itemsourcepos, itemtargetpos, 
 							resseq, resnodeid, resedgeid, rescost, resaggcost,
 							resgeom, resstreetname, source_way, target_way)
-						SELECT nextval('sheffield.batch_run_res_id_seq'), rec2.source_geom, rec2.target_geom, '6.3 public transport', t.transport_mode, --No subGroupId at this stage
+						SELECT nextval('batch_run_res_id_seq'), rec2.source_geom, rec2.target_geom, '6.3 public transport', t.transport_mode, --No subGroupId at this stage
 							t.source, t.target, 1.0, 1.0, --Start and end ways (edges) for this section not used 
 							r.seq, r.node, r.edge, r.cost, r.agg_cost, 
 							t.geom, stop_time :: varchar || ' (' || t.line_name || ') ' || t.source_stop_name,
 							rec2.source_way, rec2.target_way
 						FROM pgr_dijkstra(
-							'SELECT id, source, target, cost, reverse_cost FROM sheffield.public_transport_route_times',
+							'SELECT id, source, target, cost, reverse_cost FROM public_transport_route_times',
 							rec2.source, rec2.target
 							, true
 						) AS r
-						LEFT JOIN sheffield.public_transport_route_times t ON r.edge = t.id;
+						LEFT JOIN public_transport_route_times t ON r.edge = t.id;
 
 						--Previous route created?
 						SELECT Count(1) INTO ptFinalCount FROM tmp_final;
@@ -926,7 +926,7 @@ BEGIN
 		EXCEPTION
 			WHEN OTHERS THEN
 				RAISE NOTICE '6.0 % % % %', rec.id, rec.description, SQLERRM, SQLSTATE;
-				INSERT INTO sheffield.batch_run_res 
+				INSERT INTO batch_run_res 
 				(batch_run_id, batch_item_id, group_id, mode, mode_filter, sub_mode_filter, itemsource, itemtarget, errmsg)
 				SELECT runId, rec.id, rec.group_id, 'public transport', 6, 6, rec.source, rec.target, SQLERRM;
 		END;
@@ -935,23 +935,23 @@ BEGIN
 			IF ptFinalCount = 0 THEN
 				--Don't bother running any of this lot if we couldn't find a suitable start and end point 
 				RAISE NOTICE '6.0 % % No potential public transport routes found with low cost', rec.id, rec.description;
-				INSERT INTO sheffield.batch_run_res 
+				INSERT INTO batch_run_res 
 				(batch_run_id, batch_item_id, group_id, mode, mode_filter, sub_mode_filter, itemsource, itemtarget,  errmsg, batch_item_description)
 				SELECT runId, rec.id, rec.group_id, 'public transport', 6, 6, rec.source, rec.target, '6.0 No potential public transport routes found with low cost', rec.description;
 			ELSE
 				BEGIN
 					--6.1 Walk to the path
-					subGroupId := nextval('sheffield.batch_run_res_sub_group_id_seq');
+					subGroupId := nextval('batch_run_res_sub_group_id_seq');
 					
 					walktostartlinestring := ST_SetSRID(ST_MakeLine(rec.source, rec.source_node), 27700);
-					walktostartspeed := (SELECT urban_speed FROM sheffield.ways_config WHERE type = 'walk' AND name = 'steps'); --Assume the terrain is "difficult", garden, house etc
+					walktostartspeed := (SELECT urban_speed FROM ways_config WHERE type = 'walk' AND name = 'steps'); --Assume the terrain is "difficult", garden, house etc
 					walktostartlength := ST_Length(walktostartlinestring);
 					
-					walktostartcost := sheffield.calculateCost(walktostartlength, walktostartspeed :: smallint, 0 :: smallint, false, false);
-					walktostartcosttime := sheffield.calculateTimeCost(walktostartlength, walktostartspeed :: smallint);
-					walktostartcostmet := sheffield.getmetcost('met_17250', walktostartcosttime);
+					walktostartcost := calculateCost(walktostartlength, walktostartspeed :: smallint, 0 :: smallint, false, false);
+					walktostartcosttime := calculateTimeCost(walktostartlength, walktostartspeed :: smallint);
+					walktostartcostmet := getmetcost('met_17250', walktostartcosttime);
 					
-					INSERT INTO sheffield.batch_run_res (batch_run_id, batch_item_id, sub_group_id, group_id, group_description, mode, mode_filter, sub_mode_filter,
+					INSERT INTO batch_run_res (batch_run_id, batch_item_id, sub_group_id, group_id, group_description, mode, mode_filter, sub_mode_filter,
 						itemsource, itemtarget,  resseq, resnodeid, resedgeid, rescost, resdelay,  
 						virtual_time_cost, virtual_met_cost, virtual_length_m, virtual_built_up,
 						resgeom, resstreetname, batch_item_description)
@@ -963,14 +963,14 @@ BEGIN
 				EXCEPTION
 					WHEN OTHERS THEN
 						RAISE NOTICE '6.1 % % % %', rec.id, rec.description, SQLERRM, SQLSTATE;
-						INSERT INTO sheffield.batch_run_res 
+						INSERT INTO batch_run_res 
 						(batch_run_id, batch_item_id, group_id, mode, mode_filter, sub_mode_filter, itemsource, itemtarget, errmsg, batch_item_description)
 						SELECT runId, rec.id, rec.group_id, 'walk', 6, 4, rec.source, rec.target, SQLERRM, rec.description;
 				END;
 
 				BEGIN
 					--6.2 Walk to the bus stop
-					subGroupId := nextval('sheffield.batch_run_res_sub_group_id_seq');
+					subGroupId := nextval('batch_run_res_sub_group_id_seq');
 
 					--Get the_geom from ways_clean_vertices_pgr where the source bus stop spatially intersects
 					SELECT t.source_geom INTO busRouteSourceBusStop
@@ -978,33 +978,33 @@ BEGIN
 					LIMIT 1;
 					
 					SELECT id INTO busRouteSourceId
-					FROM sheffield.ways_clean_vertices_pgr
+					FROM ways_clean_vertices_pgr
 					WHERE ST_Equals(the_geom, busRouteSourceBusStop);
 					
-					INSERT INTO sheffield.batch_run_res (batch_run_id, batch_item_id, sub_group_id, group_id, group_description, mode, mode_filter, sub_mode_filter,
+					INSERT INTO batch_run_res (batch_run_id, batch_item_id, sub_group_id, group_id, group_description, mode, mode_filter, sub_mode_filter,
 						itemsource, itemtarget,  resseq, resnodeid, resedgeid, rescost, resdelay, 
 						resgeom, resstreetname, batch_item_description)
 					SELECT runId, rec.id, subGroupId, rec.group_id, '6.2 walk', 'walk', 6, 4,
 						rec.source, rec.target, trsp.seq, trsp.id1, trsp.id2, trsp.cost, walkdelay, 
 						w.geom, w.name, rec.description
 					FROM pgr_trsp(
-						'SELECT id, source, target, walk_cost AS cost, walk_reverse_cost AS reverse_cost FROM sheffield.ways_clean',
+						'SELECT id, source, target, walk_cost AS cost, walk_reverse_cost AS reverse_cost FROM ways_clean',
 						rec.source_node_id :: int4, busRouteSourceId :: int4, true, true
 					) AS trsp
-					LEFT JOIN sheffield.ways_clean w ON trsp.id2 = w.id;
+					LEFT JOIN ways_clean w ON trsp.id2 = w.id;
 				EXCEPTION
 					WHEN OTHERS THEN
 						RAISE NOTICE '6.2 % % % %', rec.id, rec.description, SQLERRM, SQLSTATE;
-						INSERT INTO sheffield.batch_run_res 
+						INSERT INTO batch_run_res 
 						(batch_run_id, batch_item_id, group_id, mode, mode_filter, sub_mode_filter, itemsource, itemtarget, errmsg, batch_item_description)
 						SELECT runId, rec.id, rec.group_id, 'walk', 6, 4, rec.source, rec.target, SQLERRM, rec.description;
 				END;
 
 				BEGIN 
 					--6.3 Multimodal transport, Add the previously created route
-					subGroupId := nextval('sheffield.batch_run_res_sub_group_id_seq');
+					subGroupId := nextval('batch_run_res_sub_group_id_seq');
 					
-					INSERT INTO sheffield.batch_run_res (
+					INSERT INTO batch_run_res (
 						id, batch_run_id, batch_item_id, sub_group_id, group_id, group_description, mode, mode_filter, sub_mode_filter,
 								itemsource, itemtarget, resseq, resnodeid, resedgeid, rescost, resdelay,  
 								resgeom, resstreetname, batch_item_description)
@@ -1018,14 +1018,14 @@ BEGIN
 				
 					WHEN OTHERS THEN
 						RAISE NOTICE '6.3 % % % %', rec.id, rec.description, SQLERRM, SQLSTATE;
-						INSERT INTO sheffield.batch_run_res 
+						INSERT INTO batch_run_res 
 						(batch_run_id, batch_item_id, group_id, mode, mode_filter, sub_mode_filter,	itemsource, itemtarget,  errmsg, batch_item_description)
 						SELECT runId, rec.id, rec.group_id, 'public transport', 6, 6, rec.source, rec.target, SQLERRM, rec.description;
 				END;
 
 				BEGIN
 					--6.4 Walk from the bus stop to the target
-					subGroupId := nextval('sheffield.batch_run_res_sub_group_id_seq');
+					subGroupId := nextval('batch_run_res_sub_group_id_seq');
 
 					--Get the_geom from ways_clean_vertices_pgr where the target bus stop spatially intersects
 					SELECT t.target_geom INTO busRouteTargetBusStop
@@ -1033,41 +1033,41 @@ BEGIN
 					LIMIT 1;
 					
 					SELECT id INTO busRouteTargetId
-					FROM sheffield.ways_clean_vertices_pgr
+					FROM ways_clean_vertices_pgr
 					WHERE ST_Equals(the_geom, busRouteTargetBusStop);
 					
-					INSERT INTO sheffield.batch_run_res (batch_run_id, batch_item_id, sub_group_id, group_id, group_description, mode, mode_filter, sub_mode_filter,
+					INSERT INTO batch_run_res (batch_run_id, batch_item_id, sub_group_id, group_id, group_description, mode, mode_filter, sub_mode_filter,
 						itemsource, itemtarget, resseq, resnodeid, resedgeid, rescost, resdelay, 
 						resgeom, resstreetname, batch_item_description)
 					SELECT runId, rec.id, subGroupId, rec.group_id, '6.4 walk', 'walk', 6, 4,
 						rec.source, rec.target, trsp.seq, trsp.id1, trsp.id2, trsp.cost, walkdelay, 
 						w.geom, w.name, rec.description
 					FROM pgr_trsp(
-						'SELECT id, source, target, walk_cost AS cost, walk_reverse_cost AS reverse_cost FROM sheffield.ways_clean',
+						'SELECT id, source, target, walk_cost AS cost, walk_reverse_cost AS reverse_cost FROM ways_clean',
 						busRouteTargetId :: int4, rec.target_node_id :: int4, true, true
 					) AS trsp
-					LEFT JOIN sheffield.ways_clean w ON trsp.id2 = w.id;
+					LEFT JOIN ways_clean w ON trsp.id2 = w.id;
 				EXCEPTION
 					WHEN OTHERS THEN
 						RAISE NOTICE '6.4 % % % %', rec.id, rec.description, SQLERRM, SQLSTATE;
-						INSERT INTO sheffield.batch_run_res 
+						INSERT INTO batch_run_res 
 						(batch_run_id, batch_item_id, group_id, mode, mode_filter, sub_mode_filter, itemsource, itemtarget, errmsg, batch_item_description)
 						SELECT runId, rec.id, rec.group_id, 'walk', 6, 4, rec.source, rec.target, SQLERRM, rec.description;
 				END;
 
 				BEGIN
 					--6.5 Walk off the network to target
-					subGroupId := nextval('sheffield.batch_run_res_sub_group_id_seq');
+					subGroupId := nextval('batch_run_res_sub_group_id_seq');
 								
 					walktoendlinestring := ST_SetSRID(ST_MakeLine(rec.target_node, rec.target), 27700);
-					walktoendspeed := (SELECT urban_speed FROM sheffield.ways_config WHERE type = 'walk' AND name = 'steps'); --Assume the terrain is "difficult", garden, house etc
+					walktoendspeed := (SELECT urban_speed FROM ways_config WHERE type = 'walk' AND name = 'steps'); --Assume the terrain is "difficult", garden, house etc
 					walktoendlength := ST_Length(walktoendlinestring);
 					
-					walktoendcost := sheffield.calculateCost(walktoendlength, walktoendspeed :: smallint, 0 :: smallint, false, false);
-					walktoendcosttime := sheffield.calculateTimeCost(walktoendlength, walktoendspeed :: smallint);
-					walktoendcostmet := sheffield.getmetcost('met_17250', walktoendcosttime);
+					walktoendcost := calculateCost(walktoendlength, walktoendspeed :: smallint, 0 :: smallint, false, false);
+					walktoendcosttime := calculateTimeCost(walktoendlength, walktoendspeed :: smallint);
+					walktoendcostmet := getmetcost('met_17250', walktoendcosttime);
 					
-					INSERT INTO sheffield.batch_run_res (batch_run_id, batch_item_id, sub_group_id, group_id, group_description, mode, mode_filter, sub_mode_filter,
+					INSERT INTO batch_run_res (batch_run_id, batch_item_id, sub_group_id, group_id, group_description, mode, mode_filter, sub_mode_filter,
 						itemsource, itemtarget,  resseq, resnodeid, resedgeid, rescost, resdelay, 
 						virtual_time_cost, virtual_met_cost, virtual_length_m, virtual_built_up,
 						resgeom, resstreetname, batch_item_description)
@@ -1079,7 +1079,7 @@ BEGIN
 				EXCEPTION
 					WHEN OTHERS THEN
 						RAISE NOTICE '6.5 % % % %', rec.id, rec.description, SQLERRM, SQLSTATE;
-						INSERT INTO sheffield.batch_run_res 
+						INSERT INTO batch_run_res 
 						(batch_run_id, batch_item_id, group_id, mode, mode_filter, sub_mode_filter, itemsource, itemtarget, errmsg, batch_item_description)
 						SELECT runId, rec.id, rec.group_id, 'walk', 6, 4, rec.source, rec.target, SQLERRM, rec.description;
 				END;
@@ -1099,5 +1099,5 @@ END
 $BODY$
   LANGUAGE plpgsql VOLATILE
   COST 100;
-ALTER FUNCTION sheffield.runbatch(integer, integer)
+ALTER FUNCTION runbatch(integer, integer)
   OWNER TO postgres;

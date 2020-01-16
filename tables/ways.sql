@@ -1,21 +1,21 @@
-﻿-- Sequence: import.ways_id_seq
+﻿-- Sequence: ways_id_seq
 
--- DROP SEQUENCE import.ways_id_seq;
+-- DROP SEQUENCE ways_id_seq;
 
-CREATE SEQUENCE import.ways_id_seq
+CREATE SEQUENCE ways_id_seq
   INCREMENT 1
   MINVALUE 1
   MAXVALUE 9223372036854775807
   START 1
   CACHE 1;
-ALTER TABLE import.ways_id_seq
+ALTER TABLE ways_id_seq
   OWNER TO postgres;
 
--- Table: import.ways
+-- Table: ways
 
--- DROP TABLE import.ways;
+-- DROP TABLE ways;
 
-CREATE TABLE import.ways
+CREATE TABLE ways
 (
   id serial NOT NULL,
   geom geometry(LineString,27700),
@@ -29,15 +29,15 @@ CREATE TABLE import.ways
 WITH (
   OIDS=FALSE
 );
-ALTER TABLE import.ways
+ALTER TABLE ways
   OWNER TO postgres;
 
--- Index: import.sidx_ways_geom
+-- Index: sidx_ways_geom
 
--- DROP INDEX import.sidx_ways_geom;
+-- DROP INDEX sidx_ways_geom;
 
 CREATE INDEX sidx_ways_geom
-  ON import.ways
+  ON ways
   USING gist
   (geom);
 

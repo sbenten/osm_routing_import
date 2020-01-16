@@ -1,8 +1,8 @@
-﻿-- Table: import.parking_permits
+﻿-- Table: parking_permits
 
--- DROP TABLE import.parking_permits;
+-- DROP TABLE parking_permits;
 
-CREATE TABLE import.parking_permits
+CREATE TABLE parking_permits
 (
   uid integer NOT NULL,
   geom geometry(MultiPolygon,27700),
@@ -18,5 +18,5 @@ CREATE TABLE import.parking_permits
 WITH (
   OIDS=FALSE
 );
-ALTER TABLE import.parking_permits
+ALTER TABLE parking_permits
   OWNER TO postgres;

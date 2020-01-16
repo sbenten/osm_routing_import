@@ -1,22 +1,22 @@
-﻿-- Sequence: import.ways_clean_id_seq
+﻿-- Sequence: ways_clean_id_seq
 
--- DROP SEQUENCE import.ways_clean_id_seq;
+-- DROP SEQUENCE ways_clean_id_seq;
 
-CREATE SEQUENCE import.ways_clean_id_seq
+CREATE SEQUENCE ways_clean_id_seq
   INCREMENT 1
   MINVALUE 1
   MAXVALUE 9223372036854775807
   START 1
   CACHE 1;
-ALTER TABLE import.ways_clean_id_seq
+ALTER TABLE ways_clean_id_seq
   OWNER TO postgres;
 
 
--- Table: sheffield.ways_clean
+-- Table: ways_clean
 
--- DROP TABLE sheffield.ways_clean;
+-- DROP TABLE ways_clean;
 
-CREATE TABLE sheffield.ways_clean
+CREATE TABLE ways_clean
 (
   id integer NOT NULL,
   ways_id integer,
@@ -116,33 +116,33 @@ CREATE TABLE sheffield.ways_clean
 WITH (
   OIDS=FALSE
 );
-ALTER TABLE sheffield.ways_clean
+ALTER TABLE ways_clean
   OWNER TO postgres;
 
--- Index: sheffield.source_idx
+-- Index: source_idx
 
--- DROP INDEX sheffield.source_idx;
+-- DROP INDEX source_idx;
 
 CREATE INDEX source_idx
-  ON sheffield.ways_clean
+  ON ways_clean
   USING btree
   (source);
 
--- Index: sheffield.target_idx
+-- Index: target_idx
 
--- DROP INDEX sheffield.target_idx;
+-- DROP INDEX target_idx;
 
 CREATE INDEX target_idx
-  ON sheffield.ways_clean
+  ON ways_clean
   USING btree
   (target);
 
--- Index: sheffield.ways_clean_gist
+-- Index: ways_clean_gist
 
--- DROP INDEX sheffield.ways_clean_gist;
+-- DROP INDEX ways_clean_gist;
 
 CREATE INDEX ways_clean_gist
-  ON sheffield.ways_clean
+  ON ways_clean
   USING gist
   (geom);
 

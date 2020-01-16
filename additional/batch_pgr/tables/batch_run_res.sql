@@ -1,49 +1,49 @@
-﻿-- Sequence: sheffield.batch_run_res_group_id_seq
+﻿-- Sequence: batch_run_res_group_id_seq
 
--- DROP SEQUENCE sheffield.batch_run_res_group_id_seq;
+-- DROP SEQUENCE batch_run_res_group_id_seq;
 
-CREATE SEQUENCE sheffield.batch_run_res_group_id_seq
+CREATE SEQUENCE batch_run_res_group_id_seq
   INCREMENT 1
   MINVALUE 1
   MAXVALUE 9223372036854775807
   START 1
   CACHE 1;
-ALTER TABLE sheffield.batch_run_res_group_id_seq
+ALTER TABLE batch_run_res_group_id_seq
   OWNER TO postgres;
 
--- Sequence: sheffield.batch_run_res_id_seq
+-- Sequence: batch_run_res_id_seq
 
--- DROP SEQUENCE sheffield.batch_run_res_id_seq;
+-- DROP SEQUENCE batch_run_res_id_seq;
 
-CREATE SEQUENCE sheffield.batch_run_res_id_seq
+CREATE SEQUENCE batch_run_res_id_seq
   INCREMENT 1
   MINVALUE 1
   MAXVALUE 9223372036854775807
   START 1
   CACHE 1;
-ALTER TABLE sheffield.batch_run_res_id_seq
+ALTER TABLE batch_run_res_id_seq
   OWNER TO postgres;
 
--- Sequence: sheffield.batch_run_res_sub_group_id_seq
+-- Sequence: batch_run_res_sub_group_id_seq
 
--- DROP SEQUENCE sheffield.batch_run_res_sub_group_id_seq;
+-- DROP SEQUENCE batch_run_res_sub_group_id_seq;
 
-CREATE SEQUENCE sheffield.batch_run_res_sub_group_id_seq
+CREATE SEQUENCE batch_run_res_sub_group_id_seq
   INCREMENT 1
   MINVALUE 1
   MAXVALUE 9223372036854775807
   START 1
   CACHE 1;
-ALTER TABLE sheffield.batch_run_res_sub_group_id_seq
+ALTER TABLE batch_run_res_sub_group_id_seq
   OWNER TO postgres;
 
--- Table: sheffield.batch_run_res
+-- Table: batch_run_res
 
--- DROP TABLE sheffield.batch_run_res;
+-- DROP TABLE batch_run_res;
 
-CREATE TABLE sheffield.batch_run_res
+CREATE TABLE batch_run_res
 (
-  id integer NOT NULL DEFAULT nextval('sheffield.batch_run_res_id_seq'::regclass),
+  id integer NOT NULL DEFAULT nextval('batch_run_res_id_seq'::regclass),
   batch_run_id integer NOT NULL,
   batch_item_id integer NOT NULL,
   group_id integer,
@@ -74,66 +74,66 @@ CREATE TABLE sheffield.batch_run_res
   sub_mode_filter integer,
   CONSTRAINT batch_run_res_pkey PRIMARY KEY (id),
   CONSTRAINT batch_run_res_run_fkey FOREIGN KEY (batch_run_id)
-      REFERENCES sheffield.batch_runs (id) MATCH SIMPLE
+      REFERENCES batch_runs (id) MATCH SIMPLE
       ON UPDATE NO ACTION ON DELETE NO ACTION DEFERRABLE INITIALLY IMMEDIATE
 )
 WITH (
   OIDS=FALSE
 );
-ALTER TABLE sheffield.batch_run_res
+ALTER TABLE batch_run_res
   OWNER TO postgres;
 
--- Index: sheffield.batch_item_id_idx
+-- Index: batch_item_id_idx
 
--- DROP INDEX sheffield.batch_item_id_idx;
+-- DROP INDEX batch_item_id_idx;
 
 CREATE INDEX batch_item_id_idx
-  ON sheffield.batch_run_res
+  ON batch_run_res
   USING btree
   (batch_run_id);
 
--- Index: sheffield.batch_run_id_idx
+-- Index: batch_run_id_idx
 
--- DROP INDEX sheffield.batch_run_id_idx;
+-- DROP INDEX batch_run_id_idx;
 
 CREATE INDEX batch_run_id_idx
-  ON sheffield.batch_run_res
+  ON batch_run_res
   USING btree
   (batch_run_id);
 
--- Index: sheffield.group_id_idx
+-- Index: group_id_idx
 
--- DROP INDEX sheffield.group_id_idx;
+-- DROP INDEX group_id_idx;
 
 CREATE INDEX group_id_idx
-  ON sheffield.batch_run_res
+  ON batch_run_res
   USING btree
   (group_id);
 
--- Index: sheffield.res_edge_id_idx
+-- Index: res_edge_id_idx
 
--- DROP INDEX sheffield.res_edge_id_idx;
+-- DROP INDEX res_edge_id_idx;
 
 CREATE INDEX res_edge_id_idx
-  ON sheffield.batch_run_res
+  ON batch_run_res
   USING btree
   (resedgeid);
 
--- Index: sheffield.res_node_id_idx
+-- Index: res_node_id_idx
 
--- DROP INDEX sheffield.res_node_id_idx;
+-- DROP INDEX res_node_id_idx;
 
 CREATE INDEX res_node_id_idx
-  ON sheffield.batch_run_res
+  ON batch_run_res
   USING btree
   (resnodeid);
 
--- Index: sheffield.sub_group_id_idx
+-- Index: sub_group_id_idx
 
--- DROP INDEX sheffield.sub_group_id_idx;
+-- DROP INDEX sub_group_id_idx;
 
 CREATE INDEX sub_group_id_idx
-  ON sheffield.batch_run_res
+  ON batch_run_res
   USING btree
   (sub_group_id);
 

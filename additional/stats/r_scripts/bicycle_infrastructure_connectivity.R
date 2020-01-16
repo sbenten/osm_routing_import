@@ -11,28 +11,28 @@ rm(dbpw)
 
 counts <- dbGetQuery(con, "SELECT * FROM (
   SELECT 1 as sort_order, 'all ways' AS type, COUNT(v.id) AS count 
-  FROM sheffield.ways_clean_vertices_pgr v
-  JOIN sheffield.ways_clean c ON c.source = v.id
-  CROSS JOIN (SELECT geom FROM sheffield.ttw_boundaries) AS b
+  FROM ways_clean_vertices_pgr v
+  JOIN ways_clean c ON c.source = v.id
+  CROSS JOIN (SELECT geom FROM ttw_boundaries) AS b
   WHERE ST_Contains(b.geom, c.geom)
   UNION 
   SELECT 2 as sort_order, 'dead end ways' AS type, COUNT(v.id) AS count 
-  FROM sheffield.ways_clean_vertices_pgr  v
-  JOIN sheffield.ways_clean c ON c.source = v.id
-  CROSS JOIN (SELECT geom FROM sheffield.ttw_boundaries) AS b
+  FROM ways_clean_vertices_pgr  v
+  JOIN ways_clean c ON c.source = v.id
+  CROSS JOIN (SELECT geom FROM ttw_boundaries) AS b
   WHERE ST_Contains(b.geom, c.geom) 
   AND cnt = 1
   UNION
   SELECT 3 as sort_order, 'all cycle ways' AS type, COUNT(v.id) AS count 
-  FROM sheffield.ways_cycle_infrastructure_vertices_pgr v
-  JOIN sheffield.ways_clean c ON c.source = v.id
-  CROSS JOIN (SELECT geom FROM sheffield.ttw_boundaries) AS b
+  FROM ways_cycle_infrastructure_vertices_pgr v
+  JOIN ways_clean c ON c.source = v.id
+  CROSS JOIN (SELECT geom FROM ttw_boundaries) AS b
   WHERE ST_Contains(b.geom, c.geom)
   UNION 
   SELECT 4 as sort_order, 'dead end cycle ways' AS type, COUNT(v.id) AS count 
-  FROM sheffield.ways_cycle_infrastructure_vertices_pgr v
-  JOIN sheffield.ways_clean c ON c.source = v.id
-  CROSS JOIN (SELECT geom FROM sheffield.ttw_boundaries) AS b
+  FROM ways_cycle_infrastructure_vertices_pgr v
+  JOIN ways_clean c ON c.source = v.id
+  CROSS JOIN (SELECT geom FROM ttw_boundaries) AS b
   WHERE ST_Contains(b.geom, c.geom)
   AND cnt = 1
 ) x 

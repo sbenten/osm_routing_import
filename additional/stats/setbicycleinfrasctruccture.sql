@@ -1,8 +1,8 @@
-﻿-- Function: sheffield.setbicycleinfrasctruccture()
+﻿-- Function: setbicycleinfrasctruccture()
 
--- DROP FUNCTION sheffield.setbicycleinfrasctruccture();
+-- DROP FUNCTION setbicycleinfrasctruccture();
 
-CREATE OR REPLACE FUNCTION sheffield.setbicycleinfrasctruccture()
+CREATE OR REPLACE FUNCTION setbicycleinfrasctruccture()
   RETURNS void AS
 $BODY$
 /*
@@ -14,7 +14,7 @@ BEGIN
 
 	--anything tagged as part of a cycle network, assume shared infrastructure
 	--can be over-ruled at a later point
-	UPDATE sheffield.ways_clean 
+	UPDATE ways_clean 
 	SET bicycle_infrastructure = 'shared'
 	WHERE (attrs ? 'icn'
 		OR attrs ? 'icn_ref'
@@ -26,13 +26,13 @@ BEGIN
 		OR attrs ? 'lcn_ref');
 
 	--other non-roads where cycling is permitted
-	UPDATE sheffield.ways_clean 
+	UPDATE ways_clean 
 	SET bicycle_infrastructure = 'off-road'
 	WHERE highway IN ('bridleway', 'track')
 	AND (attrs IS NULL OR (attrs ? 'bicycle' AND (attrs -> 'bicycle' != 'no')));
 
 	--deal with busways, bicycles usually share them with buses
-	UPDATE sheffield.ways_clean 
+	UPDATE ways_clean 
 	SET bicycle_infrastructure = 'shared'
 	WHERE (attrs ? 'busway' AND (attrs -> 'busway' != 'no'))
 	OR (attrs ? 'busway:left' AND (attrs -> 'busway' != 'no'))
@@ -43,7 +43,7 @@ BEGIN
 	OR (attrs ? 'lanes:bus' AND (attrs -> 'lanes:bus' != 'no'));
 
 	--sections shared with other traffic
-	UPDATE sheffield.ways_clean 
+	UPDATE ways_clean 
 	SET bicycle_infrastructure = 'shared'
 	WHERE (attrs ? 'cycleway' AND (attrs -> 'cycleway' != 'no')) --try to catch all possibilities, including badly tagged edges	
 	OR (attrs ? 'cycleway:both' AND (attrs -> 'cycleway:both' != 'no'))
@@ -56,7 +56,7 @@ BEGIN
 
 
 	--completely segregated tracks
-	UPDATE sheffield.ways_clean 
+	UPDATE ways_clean 
 	SET bicycle_infrastructure = 'segregated'
 	WHERE highway = 'cycleway' 
 	OR (attrs ? 'cycleway' AND (attrs -> 'cycleway'  IN ('opposite_track', 'segregated', 'track'))) --now check specifically tagged cycleways	
@@ -69,7 +69,7 @@ BEGIN
 	OR (attrs ? 'cycleway:right:lane' AND (attrs -> 'cycleway:right:lane' IN ('opposite_track', 'segregated', 'track')));
 
 	--cycling facilities shred with pedestrians
-	UPDATE sheffield.ways_clean 
+	UPDATE ways_clean 
 	SET bicycle_infrastructure = 'segregated' 
 	WHERE highway IN ('path', 'footway', 'pedestrian')
 	AND ((attrs ? 'bicycle' AND (attrs -> 'bicycle' != 'no'))
@@ -77,7 +77,7 @@ BEGIN
 		OR (attrs ? 'cycle' AND (attrs -> 'cycle' != 'no')));
 
 	--finally, update anywhere without bicycle access to 'none'
-	UPDATE sheffield.ways_clean 
+	UPDATE ways_clean 
 	SET bicycle_infrastructure = 'none' 
 	WHERE highway IN ('path', 'footway', 'pedestrian')
 	AND ((attrs ? 'bicycle' AND (attrs -> 'bicycle' = 'no'))
@@ -89,5 +89,5 @@ END;
 $BODY$
   LANGUAGE plpgsql VOLATILE
   COST 100;
-ALTER FUNCTION sheffield.setbicycleinfrasctruccture()
+ALTER FUNCTION setbicycleinfrasctruccture()
   OWNER TO postgres;

@@ -1,8 +1,8 @@
-﻿-- Table: import.settings
+﻿-- Table: settings
 
--- DROP TABLE import.settings;
+-- DROP TABLE settings;
 
-CREATE TABLE import.settings
+CREATE TABLE settings
 (
   name character varying NOT NULL,
   val character varying NOT NULL,
@@ -12,5 +12,5 @@ CREATE TABLE import.settings
 WITH (
   OIDS=FALSE
 );
-ALTER TABLE import.settings
+ALTER TABLE settings
   OWNER TO postgres;

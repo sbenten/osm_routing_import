@@ -1,8 +1,8 @@
-﻿-- Materialized View: sheffield.vw_batch_run_results_base
+﻿-- Materialized View: vw_batch_run_results_base
 
--- DROP MATERIALIZED VIEW sheffield.vw_batch_run_results_base;
+-- DROP MATERIALIZED VIEW vw_batch_run_results_base;
 
-CREATE MATERIALIZED VIEW sheffield.vw_batch_run_results_base AS 
+CREATE MATERIALIZED VIEW vw_batch_run_results_base AS 
  SELECT o.atlas_key,
     o.union_id,
     o.id,
@@ -226,9 +226,9 @@ CREATE MATERIALIZED VIEW sheffield.vw_batch_run_results_base AS
                     r.virtual_met_cost AS reverse_cost_met,
                     min(r.id) OVER (PARTITION BY r.batch_run_id, r.group_id, r.sub_group_id) AS firstnode,
                     max(r.id) OVER (PARTITION BY r.batch_run_id, r.group_id, r.sub_group_id) AS lastnode
-                   FROM sheffield.batch_run_res r
-                     JOIN sheffield.batch_runs s ON s.id = r.batch_run_id
-                     JOIN sheffield.batch_items i_1 ON i_1.id = r.batch_item_id
+                   FROM batch_run_res r
+                     JOIN batch_runs s ON s.id = r.batch_run_id
+                     JOIN batch_items i_1 ON i_1.id = r.batch_item_id
                   WHERE r.virtual_length_m > 0::double precision
                 UNION ALL
                  SELECT (r.batch_item_id || '_'::text) || r.group_id AS atlas_key,
@@ -302,10 +302,10 @@ CREATE MATERIALIZED VIEW sheffield.vw_batch_run_results_base AS
                         END AS reverse_cost_met,
                     min(r.id) OVER (PARTITION BY r.batch_run_id, r.group_id, r.sub_group_id) AS firstnode,
                     max(r.id) OVER (PARTITION BY r.batch_run_id, r.group_id, r.sub_group_id) AS lastnode
-                   FROM sheffield.batch_run_res r
-                     JOIN sheffield.batch_runs s ON s.id = r.batch_run_id
-                     JOIN sheffield.batch_items i_1 ON i_1.id = r.batch_item_id
-                     JOIN sheffield.ways_clean w ON w.id = r.resedgeid AND r.sub_mode_filter <> 6
+                   FROM batch_run_res r
+                     JOIN batch_runs s ON s.id = r.batch_run_id
+                     JOIN batch_items i_1 ON i_1.id = r.batch_item_id
+                     JOIN ways_clean w ON w.id = r.resedgeid AND r.sub_mode_filter <> 6
                 UNION ALL
                  SELECT (r.batch_item_id || '_'::text) || r.group_id AS atlas_key,
                     3 AS union_id,
@@ -365,49 +365,49 @@ CREATE MATERIALIZED VIEW sheffield.vw_batch_run_results_base AS
                     COALESCE(t.reverse_cost_met, r.virtual_met_cost) AS reverse_cost_met,
                     min(r.id) OVER (PARTITION BY r.batch_run_id, r.group_id, r.sub_group_id) AS firstnode,
                     max(r.id) OVER (PARTITION BY r.batch_run_id, r.group_id, r.sub_group_id) AS lastnode
-                   FROM sheffield.batch_run_res r
-                     JOIN sheffield.batch_runs s ON s.id = r.batch_run_id
-                     JOIN sheffield.batch_items i_1 ON i_1.id = r.batch_item_id
-                     JOIN sheffield.public_transport_route_times t ON t.id = r.resedgeid AND r.sub_mode_filter = 6) i) o
+                   FROM batch_run_res r
+                     JOIN batch_runs s ON s.id = r.batch_run_id
+                     JOIN batch_items i_1 ON i_1.id = r.batch_item_id
+                     JOIN public_transport_route_times t ON t.id = r.resedgeid AND r.sub_mode_filter = 6) i) o
   ORDER BY o.group_id, o.sub_group_id, o.resseq
 WITH DATA;
 
-ALTER TABLE sheffield.vw_batch_run_results_base
+ALTER TABLE vw_batch_run_results_base
   OWNER TO postgres;
 
--- Index: sheffield.vw_batch_item_id_idx
+-- Index: vw_batch_item_id_idx
 
--- DROP INDEX sheffield.vw_batch_item_id_idx;
+-- DROP INDEX vw_batch_item_id_idx;
 
 CREATE INDEX vw_batch_item_id_idx
-  ON sheffield.vw_batch_run_results_base
+  ON vw_batch_run_results_base
   USING btree
   (batch_item_id);
 
--- Index: sheffield.vw_batch_run_id_idx
+-- Index: vw_batch_run_id_idx
 
--- DROP INDEX sheffield.vw_batch_run_id_idx;
+-- DROP INDEX vw_batch_run_id_idx;
 
 CREATE INDEX vw_batch_run_id_idx
-  ON sheffield.vw_batch_run_results_base
+  ON vw_batch_run_results_base
   USING btree
   (batch_run_id);
 
--- Index: sheffield.vw_group_id_idx
+-- Index: vw_group_id_idx
 
--- DROP INDEX sheffield.vw_group_id_idx;
+-- DROP INDEX vw_group_id_idx;
 
 CREATE INDEX vw_group_id_idx
-  ON sheffield.vw_batch_run_results_base
+  ON vw_batch_run_results_base
   USING btree
   (group_id);
 
--- Index: sheffield.vw_sub_group_id_idx
+-- Index: vw_sub_group_id_idx
 
--- DROP INDEX sheffield.vw_sub_group_id_idx;
+-- DROP INDEX vw_sub_group_id_idx;
 
 CREATE INDEX vw_sub_group_id_idx
-  ON sheffield.vw_batch_run_results_base
+  ON vw_batch_run_results_base
   USING btree
   (sub_group_id);
 

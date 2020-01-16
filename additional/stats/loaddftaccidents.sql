@@ -129,7 +129,7 @@ WHERE NOT EXISTS (
 --Geographically limit accidents to within study area
 WITH x AS (
 	SELECT geom
-	FROM sheffield.ttw_boundaries
+	FROM ttw_boundaries
 	WHERE objectid = 118
 ),
 y AS (
@@ -197,50 +197,50 @@ Casualty type
 /*
 Copy back across to study area schema for later analysis
 */
-DROP TABLE sheffield.accidents
+DROP TABLE accidents
 
-CREATE TABLE sheffield.accidents AS
+CREATE TABLE accidents AS
 SELECT a.id, a.accident_severity as severity, a.police_attended, a.pedestrian, a.cyclist, x.geom, x.date
 FROM dft.accidents a
 JOIN dft.accidents_ex x ON x.accident_id = a.id
 WHERE a.study = true;
 
-ALTER TABLE sheffield.accidents RENAME COLUMN accident_id TO id;
-ALTER TABLE sheffield.accidents ADD CONSTRAINT accidents_pkey PRIMARY KEY (id);
+ALTER TABLE accidents RENAME COLUMN accident_id TO id;
+ALTER TABLE accidents ADD CONSTRAINT accidents_pkey PRIMARY KEY (id);
 
 
 /*
 Update highway edges with accident counts
 */
-UPDATE sheffield.ways_clean SET cyclist_accidents = COALESCE(x.accident_count, 0)
+UPDATE ways_clean SET cyclist_accidents = COALESCE(x.accident_count, 0)
 FROM (
 	SELECT w.id, count(a.geom) AS accident_count
-	FROM sheffield.ways_clean w
-	LEFT JOIN sheffield.accidents a ON ST_Contains(ST_Buffer(w.geom, 10.0), a.geom) 
+	FROM ways_clean w
+	LEFT JOIN accidents a ON ST_Contains(ST_Buffer(w.geom, 10.0), a.geom) 
 	WHERE w.cycle_allow AND
 	a.cyclist = true
 	GROUP BY w.id	
 ) x 
-WHERE sheffield.ways_clean.id = x.id;
+WHERE ways_clean.id = x.id;
 
 
-UPDATE sheffield.ways_clean SET pedestrian_accidents = COALESCE(x.accident_count, 0)
+UPDATE ways_clean SET pedestrian_accidents = COALESCE(x.accident_count, 0)
 FROM (
 	SELECT w.id, count(a.geom) AS accident_count
-	FROM sheffield.ways_clean w
-	LEFT JOIN sheffield.accidents a ON ST_Contains(ST_Buffer(w.geom, 10.0), a.geom) 
+	FROM ways_clean w
+	LEFT JOIN accidents a ON ST_Contains(ST_Buffer(w.geom, 10.0), a.geom) 
 	WHERE w.walk_allow AND
 	a.pedestrian = true
 	GROUP BY w.id	
 ) x 
-WHERE sheffield.ways_clean.id = x.id;
+WHERE ways_clean.id = x.id;
 
 
-UPDATE sheffield.ways_clean SET total_accidents = COALESCE(x.accident_count, 0)
+UPDATE ways_clean SET total_accidents = COALESCE(x.accident_count, 0)
 FROM (
 	SELECT w.id, count(a.geom) AS accident_count
-	FROM sheffield.ways_clean w
-	LEFT JOIN sheffield.accidents a ON ST_Contains(ST_Buffer(w.geom, 10.0), a.geom) 
+	FROM ways_clean w
+	LEFT JOIN accidents a ON ST_Contains(ST_Buffer(w.geom, 10.0), a.geom) 
 	GROUP BY w.id	
 ) x 
-WHERE sheffield.ways_clean.id = x.id;
+WHERE ways_clean.id = x.id;

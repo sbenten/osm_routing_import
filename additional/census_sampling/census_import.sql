@@ -4,7 +4,7 @@ These polygons will be used as source and target areas for home and work destina
 However, these are UK wide, not just the study area.
 Add a new column “include” to indicate which output areas are within the study area.
  */
-ALTER TABLE import.output_areas_2011 ADD COLUMN include boolean DEFAULT false;
+ALTER TABLE output_areas_2011 ADD COLUMN include boolean DEFAULT false;
 /*
 Populate this column by setting the “include” flag to true where the polygon is contained within the study area. 
 Just buffer the ways table so as not to include OAs that are on the edge of the network.
@@ -15,16 +15,16 @@ DECLARE
 BEGIN
  
 WITH x AS (
-	SELECT geom FROM import.ttw_bounaries WHERE ttwa11cd = 'E30000261'
+	SELECT geom FROM ttw_bounaries WHERE ttwa11cd = 'E30000261'
 )
-	UPDATE import.output_areas_2011 SET include = true 
+	UPDATE output_areas_2011 SET include = true 
 	FROM (
 	SELECT o.id 
-	FROM import.output_areas_2011 o, x
+	FROM output_areas_2011 o, x
 	WHERE ST_Overlaps(x.geom, o.geom) = true
 	OR ST_Contains(x.geom, o.geom) = true
 ) y 
-WHERE y.id = import.output_areas_2011.id;
+WHERE y.id = output_areas_2011.id;
 
 END
 $$
@@ -32,8 +32,8 @@ language plpgsql;
 /*
 Should now have a sensible amount to work with
 
-SELECT Count(1) FROM import.output_areas_2011 --232296
-SELECT Count(1) FROM import.output_areas_2011 WHERE include = true --2840
+SELECT Count(1) FROM output_areas_2011 --232296
+SELECT Count(1) FROM output_areas_2011 WHERE include = true --2840
 */
 
 /*
@@ -41,7 +41,7 @@ Now import the census data downloaded from the UK data service, using the Postgr
 Create a table to hold the data based on the census naming convention 
 The COPY command won't work with the table definition backed up by PgAdmin due to the extra columns, so drop and recreate if it exists already.
 */ 
-CREATE TABLE import.wf01buk_oa_v2
+CREATE TABLE wf01buk_oa_v2
 (
   source_oa character varying,
   target_oa character varying,
@@ -51,7 +51,7 @@ CREATE TABLE import.wf01buk_oa_v2
 WITH (
   OIDS=FALSE
 );
-ALTER TABLE import.wf01buk_oa_v2
+ALTER TABLE wf01buk_oa_v2
   OWNER TO postgres;
 /*
 Insert the census data
@@ -59,11 +59,11 @@ Insert the census data
 …Be patient…
 Query returned successfully: 16857265 rows affected, 12:48 minutes execution time.
 */
-COPY import.wf01buk_oa_v2 from 'D:\Users\sbent\OneDrive\Data\PhD\Census 2011\wf01buk_oa_v2.csv' DELIMITERS ',' CSV;
+COPY wf01buk_oa_v2 from 'D:\Users\sbent\OneDrive\Data\PhD\Census 2011\wf01buk_oa_v2.csv' DELIMITERS ',' CSV;
 /* 
 Add another column to flag which flows in the census data are within the study area
 */
-ALTER TABLE import.wf01buk_oa_v2 ADD COLUMN source_found BOOLEAN DEFAULT false, ADD COLUMN target_found BOOLEAN DEFAULT false;
+ALTER TABLE wf01buk_oa_v2 ADD COLUMN source_found BOOLEAN DEFAULT false, ADD COLUMN target_found BOOLEAN DEFAULT false;
  /*
 Now populate these new columns with the census flows within the study area
 The UK output areas should already have been filtered to those within the study travel to work area if following this script carefully
@@ -74,15 +74,15 @@ $$
 DECLARE 
 BEGIN
 
-	UPDATE import.wf01buk_oa_v2 SET source_found = true WHERE EXISTS (
-		SELECT geo_code FROM import.output_areas_2011 WHERE include = true AND GEO_CODE = import.wf01buk_oa_v2.source_oa
+	UPDATE wf01buk_oa_v2 SET source_found = true WHERE EXISTS (
+		SELECT geo_code FROM output_areas_2011 WHERE include = true AND GEO_CODE = wf01buk_oa_v2.source_oa
 	);
 
-	UPDATE import.wf01buk_oa_v2 SET target_found = true WHERE EXISTS (
-		SELECT geo_code FROM import.output_areas_2011 WHERE include = true AND GEO_CODE = import.wf01buk_oa_v2.target_oa
+	UPDATE wf01buk_oa_v2 SET target_found = true WHERE EXISTS (
+		SELECT geo_code FROM output_areas_2011 WHERE include = true AND GEO_CODE = wf01buk_oa_v2.target_oa
 	);
 
-	UPDATE import.wf01buk_oa_v2 
+	UPDATE wf01buk_oa_v2 
 	SET source_found = false, target_found = false
 	WHERE source_oa = target_oa;
 
@@ -101,7 +101,7 @@ Numbers will be rounded up so we have whole numbers of samples.
 This doesn't work correctly:
 SELECT source_oa, target_oa, count,
 SUM(count) OVER(ORDER BY count DESC) AS agg_count
-FROM import.wf01buk_oa_v2
+FROM wf01buk_oa_v2
 WHERE source_found = true AND target_found = true
 ORDER BY count DESC
 
@@ -121,19 +121,19 @@ rec record;
 BEGIN
  
 	SELECT SUM(count) INTO total
-	FROM import.wf01buk_oa_v2
+	FROM wf01buk_oa_v2
 	WHERE source_found = true AND target_found = true;
  
         FOR rec IN
                 SELECT source_oa, target_oa, count --, SUM(count) OVER(ORDER BY count DESC) AS agg_count
-                FROM import.wf01buk_oa_v2
+                FROM wf01buk_oa_v2
 		WHERE source_found = true AND target_found = true
                 ORDER BY count DESC
         LOOP
                 IF agg_count <= (total / 10) THEN
                         agg_count = agg_count + rec.count;
  
-                        INSERT INTO import.census_flow_sample (source_oa, target_oa, count, agg_count)
+                        INSERT INTO census_flow_sample (source_oa, target_oa, count, agg_count)
                         VALUES (rec.source_oa, rec.target_oa, rec.count, agg_count);
                 ELSE
                         EXIT;
@@ -147,21 +147,21 @@ This data was added from QGis, using a spatial join of the boundaries SHP file t
 This will be used to determine some special cases from each decile rank to focus on later.
 */ 
 WITH x AS (
-        SELECT geom FROM import.ttw_boundaries WHERE ttwa11cd = 'E30000261'
+        SELECT geom FROM ttw_boundaries WHERE ttwa11cd = 'E30000261'
 )
-INSERT INTO import.lsoa_imd_sheffield 
+INSERT INTO lsoa_imd_sheffield 
 SELECT i.* 
-FROM import.lsoa_imd i, x
+FROM lsoa_imd i, x
 WHERE ST_Overlaps(x.geom, i.geom) = true
 OR ST_Contains(x.geom, i.geom) = true;
 /* 
 Now classify the IMD data into deciles and quintiles for grouping:
 */
-ALTER TABLE import.lsoa_imd_sheffield ADD COLUMN decile integer NOT NULL DEFAULT 0, ADD COLUMN quintile integer NOT NULL DEFAULT 0;
+ALTER TABLE lsoa_imd_sheffield ADD COLUMN decile integer NOT NULL DEFAULT 0, ADD COLUMN quintile integer NOT NULL DEFAULT 0;
 /*
 Ranges created in QGIS with Equal Interval categories:
 */
-UPDATE sheffield.lsoa_imd_sheffield SET decile = CASE 
+UPDATE lsoa_imd_sheffield SET decile = CASE 
  WHEN ovrk2015 <= 3329.3 THEN 1
  WHEN ovrk2015 > 3329.3 AND ovrk2015 <= 6605.6 THEN 2
  WHEN ovrk2015 > 6605.6 AND ovrk2015 <= 9881.9 THEN 3
@@ -175,7 +175,7 @@ UPDATE sheffield.lsoa_imd_sheffield SET decile = CASE
  ELSE 0
  END;
  
-UPDATE import.lsoa_imd_sheffield SET quintile = CASE 
+UPDATE lsoa_imd_sheffield SET quintile = CASE 
         WHEN ovrk2015 <= 6605.6 THEN 1
         WHEN ovrk2015 > 6605.6 AND ovrk2015 <= 13158.2 THEN 2
         WHEN ovrk2015 > 13158.2 AND ovrk2015 <= 19710.8 THEN 3
@@ -204,7 +204,7 @@ BEGIN
         FOR rec IN 
                 SELECT *, 
                 CASE WHEN round(count / 10) = 0 THEN 1 ELSE round(count / 10) END AS sample_count
-                FROM import.census_flow_sample
+                FROM census_flow_sample
         LOOP    
                 --Clean variables at the start of the loop
                 i := 1;
@@ -217,14 +217,14 @@ BEGIN
                 --gets the number of records based on a percentage. It's fast, but doesn't return the exact amount of records, so err on the plus side. 
                 INSERT INTO tmpsource 
                 SELECT rownum, id, pnt 
-                FROM import.generateRandomBuildingSample(rec.count, (SELECT geom FROM import.output_areas_2011 WHERE geo_code = rec.source_oa), 0);
+                FROM generateRandomBuildingSample(rec.count, (SELECT geom FROM output_areas_2011 WHERE geo_code = rec.source_oa), 0);
                 
                 INSERT INTO tmptarget 
                 SELECT rownum, id, pnt 
-                FROM import.generateRandomBuildingSample(rec.count, (SELECT geom FROM import.output_areas_2011 WHERE geo_code = rec.target_oa), 0);     
+                FROM generateRandomBuildingSample(rec.count, (SELECT geom FROM output_areas_2011 WHERE geo_code = rec.target_oa), 0);     
  
                 WHILE i < rec.sample_count LOOP
-                        INSERT INTO import.census_flow_sample (source_oa, target_oa, source, target)
+                        INSERT INTO census_flow_sample (source_oa, target_oa, source, target)
                         VALUES (rec.source_oa, rec.target_oa, 
                                 (SELECT pnt FROM tmpsource WHERE rownum = i), 
                                 (SELECT pnt FROM tmptarget WHERE rownum = i)
@@ -239,8 +239,8 @@ $$ language plpgsql;
 /* 
 Have a basic look at the direction of travel
 */
---ALTER TABLE import.census_flow_sample ADD COLUMN flow geometry(LineString, 27700);
-UPDATE import.census_flow_sample SET flow = ST_MakeLine(source, target);
+--ALTER TABLE census_flow_sample ADD COLUMN flow geometry(LineString, 27700);
+UPDATE census_flow_sample SET flow = ST_MakeLine(source, target);
  
  
  
@@ -250,11 +250,11 @@ UPDATE import.census_flow_sample SET flow = ST_MakeLine(source, target);
 ADD SOME DESCRIPTIONS TO THE DATA
 First import the os_open_names data clipped to within 5k of the boundary.
  
-        ALTER TABLE import.census_flow_sample ADD COLUMN source_description character varying, ADD COLUMN target_description character varying
+        ALTER TABLE census_flow_sample ADD COLUMN source_description character varying, ADD COLUMN target_description character varying
  
-SELECT import.setFlowSampleDescriptions()
+SELECT setFlowSampleDescriptions()
  
-CREATE OR REPLACE FUNCTION import.setFlowSampleDescriptions() RETURNS VOID AS
+CREATE OR REPLACE FUNCTION setFlowSampleDescriptions() RETURNS VOID AS
 $$
 DECLARE
 rec record;
@@ -262,11 +262,11 @@ BEGIN
  
         RAISE NOTICE 'Setting source descriptions';
         FOR rec IN
-                SELECT id, source FROM import.census_flow_sample WHERE source IS NOT NULL
+                SELECT id, source FROM census_flow_sample WHERE source IS NOT NULL
         LOOP
-                UPDATE import.census_flow_sample SET source_description = (
+                UPDATE census_flow_sample SET source_description = (
                         SELECT o.name
-                        FROM import.os_open_names o 
+                        FROM os_open_names o 
                         ORDER BY o.geom <-> rec.source
                         LIMIT 1
                 )
@@ -275,11 +275,11 @@ BEGIN
  
         RAISE NOTICE 'Setting target descriptions';
         FOR rec IN
-                SELECT id, target FROM import.census_flow_sample WHERE target IS NOT NULL
+                SELECT id, target FROM census_flow_sample WHERE target IS NOT NULL
         LOOP
-                UPDATE import.census_flow_sample SET target_description = (
+                UPDATE census_flow_sample SET target_description = (
                         SELECT o.name
-                        FROM import.os_open_names o 
+                        FROM os_open_names o 
                         ORDER BY o.geom <-> rec.target
                         LIMIT 1
                 )
@@ -289,9 +289,9 @@ BEGIN
 END
 $$ LANGUAGE plpgsql;
  
-TRUNCATE TABLE sheffield.census_flow_sample; 
+TRUNCATE TABLE census_flow_sample; 
  
-ALTER TABLE sheffield.census_flow_sample ADD COLUMN source_description character varying, ADD COLUMN target_description character varying;
+ALTER TABLE census_flow_sample ADD COLUMN source_description character varying, ADD COLUMN target_description character varying;
  
-INSERT INTO sheffield.census_flow_sample
-SELECT * FROM import.census_flow_sample;
+INSERT INTO census_flow_sample
+SELECT * FROM census_flow_sample;

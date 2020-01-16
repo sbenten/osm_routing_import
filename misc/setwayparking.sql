@@ -109,8 +109,8 @@ except when forced to do so by stationary traffic.
 Rule 245
 Controlled Parking Zones. The zone entry signs indicate the times when the waiting restrictions within the zone are in force. Parking may be allowed in some places at other times. 
 Otherwise parking will be within separately signed and marked bays.
-	NOTE: TODO These controlled areas are akin to Permit areas in Sheffield. Consider incorporating?
-	https://www.sheffield.gov.uk/home/parking/apply-parking-permit/parking-permit-zones.html
+	NOTE: TODO These controlled areas are akin to Permit areas in  Consider incorporating?
+	https://www.gov.uk/home/parking/apply-parking-permit/parking-permit-zones.html
 */
 
 --A final sanity check. Some highway types you cannot even drive a car along and stop:

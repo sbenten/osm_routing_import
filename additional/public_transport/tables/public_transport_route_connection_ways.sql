@@ -1,23 +1,23 @@
-﻿-- Sequence: import.public_transport_route_connection_ways_id_seq
+﻿-- Sequence: public_transport_route_connection_ways_id_seq
 
--- DROP SEQUENCE import.public_transport_route_connection_ways_id_seq;
+-- DROP SEQUENCE public_transport_route_connection_ways_id_seq;
 
-CREATE SEQUENCE import.public_transport_route_connection_ways_id_seq
+CREATE SEQUENCE public_transport_route_connection_ways_id_seq
   INCREMENT 1
   MINVALUE 1
   MAXVALUE 9223372036854775807
   START 1
   CACHE 1;
-ALTER TABLE import.public_transport_route_connection_ways_id_seq
+ALTER TABLE public_transport_route_connection_ways_id_seq
   OWNER TO postgres;
 
--- Table: import.public_transport_route_connection_ways
+-- Table: public_transport_route_connection_ways
 
--- DROP TABLE import.public_transport_route_connection_ways;
+-- DROP TABLE public_transport_route_connection_ways;
 
-CREATE TABLE import.public_transport_route_connection_ways
+CREATE TABLE public_transport_route_connection_ways
 (
-  id integer NOT NULL DEFAULT nextval('import.public_transport_route_connection_ways_id_seq'::regclass),
+  id integer NOT NULL DEFAULT nextval('public_transport_route_connection_ways_id_seq'::regclass),
   geom geometry(LineString,27700),
   cost double precision,
   reverse_cost double precision,
@@ -45,15 +45,15 @@ CREATE TABLE import.public_transport_route_connection_ways
 WITH (
   OIDS=FALSE
 );
-ALTER TABLE import.public_transport_route_connection_ways
+ALTER TABLE public_transport_route_connection_ways
   OWNER TO postgres;
 
--- Index: import.public_transport_route_connection_ways_geom_idx
+-- Index: public_transport_route_connection_ways_geom_idx
 
--- DROP INDEX import.public_transport_route_connection_ways_geom_idx;
+-- DROP INDEX public_transport_route_connection_ways_geom_idx;
 
 CREATE INDEX public_transport_route_connection_ways_geom_idx
-  ON import.public_transport_route_connection_ways
+  ON public_transport_route_connection_ways
   USING gist
   (geom);
 

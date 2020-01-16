@@ -84,7 +84,7 @@ FROM x;
 			WHERE id = rec2.id
 		LOOP
     		INSERT INTO tmp 
-			SELECT id, geom FROM osm_nodes_sheffield WHERE osm_id = rec.node_osm_id;
+			SELECT id, geom FROM osm_nodes WHERE osm_id = rec.node_osm_id;
    	 	END LOOP;
 	
 		UPDATE osm_ways SET geom = (SELECT ST_MakeLine(pnt) FROM tmp) WHERE id = rec2.id;

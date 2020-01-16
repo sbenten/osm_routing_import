@@ -29,9 +29,9 @@ flows <- dbGetQuery(con, "SELECT id,
                       hlthdecile,
                       hlthquintile,
                       flow_direction,
-                      (SELECT name FROM sheffield.os_open_names WHERE id = c.home_settlement_id) AS home_name,
-                      (SELECT name FROM sheffield.os_open_names WHERE id = c.work_settlement_id) AS work_name 
-                      FROM sheffield.census_flows c")
+                      (SELECT name FROM os_open_names WHERE id = c.home_settlement_id) AS home_name,
+                      (SELECT name FROM os_open_names WHERE id = c.work_settlement_id) AS work_name 
+                      FROM census_flows c")
 
 #reshape the data for summary info
 #prob an easier way to do this with reshape or something, but given lack of knowledge longhand version used

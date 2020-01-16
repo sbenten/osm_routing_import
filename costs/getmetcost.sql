@@ -4,7 +4,7 @@ CREATE FUNCTION getmetcost(setting character varying, timecost double precision)
 /*
 Update the road length and transport mode costs
 
-setting = Name. sheffield.settings.name "met_xxxx" value
+setting = Name. settings.name "met_xxxx" value
 	Several MET settings from the Compendium of Physical Activities are available
 timecost = Seconds. Cost in seconds spent doing an activity
 

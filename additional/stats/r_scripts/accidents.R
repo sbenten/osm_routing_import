@@ -85,7 +85,7 @@ junctions <- dbGetQuery(con, "SELECT id,
   total_accidents,
   pedestrian_accidents,
   cyclist_accidents
-FROM sheffield.ways_clean
+FROM ways_clean
 WHERE total_accidents > 0")
 
 #produce maps:
@@ -130,7 +130,7 @@ ggplot(data=subset(junctions, cyclist_accidents>0), aes(bicycle_infrastructure))
 #plot(infrastructure_tuk)
 
 infrastructure <- dbGetQuery(con,"SELECT id, osm_id, highway, name, length_m, bicycle_infrastructure
-                             FROM sheffield.ways_clean
+                             FROM ways_clean
                              WHERE cycle_allow = true") 
 
 total_ways <- nrow(infrastructure)
@@ -142,7 +142,7 @@ perc_offroad <- (nrow(subset(infrastructure, bicycle_infrastructure=='off-road')
 
 
 infrastructure_urban <- dbGetQuery(con,"SELECT id, osm_id, highway, name, length_m, bicycle_infrastructure
-                             FROM sheffield.ways_clean
+                             FROM ways_clean
                              WHERE cycle_allow = true
                              AND built_up = true") 
 

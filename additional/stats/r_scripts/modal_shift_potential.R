@@ -54,7 +54,7 @@ flows <- dbGetQuery(con, "SELECT group_id, batch_run_id, batch_item_id, batch_it
                     'quintile_' || (home_health_quintile-1) AS cat_home_health_quintile,
                     CEIL(length_agg_cost / 1000) AS km_ceil_cost,
                     CEIL(delay_time_agg_cost / 60) AS delay_time_ceil_cost
-                    FROM sheffield.batch_run_res_summary 
+                    FROM batch_run_res_summary 
 	                  WHERE mode_filter IN(2, 3, 4)
                     AND exclude_stats = false 
                     AND delay_time_agg_cost > 599
@@ -63,7 +63,7 @@ flows <- dbGetQuery(con, "SELECT group_id, batch_run_id, batch_item_id, batch_it
 
 #not really any point, a barplot will suffice
 #counts <- dbGetQuery(con, "SELECT COUNT(1) AS count, 'decile_' || (home_health_decile-1) AS cat_home_health_decile
-#                     FROM sheffield.batch_run_res_summary 
+#                     FROM batch_run_res_summary 
 #                     WHERE mode_filter IN(3, 4)
 #                     AND exclude_stats = false 
 #                     AND delay_time_agg_cost > 599
@@ -159,7 +159,7 @@ flows_all <- dbGetQuery(con, "SELECT group_id, batch_run_id, batch_item_id, batc
                     'quintile_' || (home_health_quintile-1) AS cat_home_health_quintile,
                     CEIL(length_agg_cost / 1000) AS km_ceil_cost,
                     CEIL(delay_time_agg_cost / 60) AS delay_time_ceil_cost
-                    FROM sheffield.batch_run_res_summary 
+                    FROM batch_run_res_summary 
                     WHERE mode_filter IN(3, 4)
                     AND exclude_stats = false 
                     AND delay_time_agg_cost > 599
@@ -187,22 +187,22 @@ ggplot(data=flows_all, aes(home_health_decile)) +
 
 counts <- dbGetQuery(con, "SELECT * FROM (
   SELECT 1 AS type, 'bike_count' AS description, Count(DISTINCT batch_item_id) AS count
-  FROM sheffield.batch_run_res_summary
+  FROM batch_run_res_summary
   WHERE mode_filter = 2
   AND ((delay_time_agg_cost + 600) > bike_delay_time_agg_cost AND bike_delay_time_agg_cost > 599 AND bike_delay_time_agg_cost < 1801)
   UNION
   SELECT 2 AS type, 'walk_count' AS description, Count(DISTINCT batch_item_id) AS count
-  FROM sheffield.batch_run_res_summary
+  FROM batch_run_res_summary
   WHERE mode_filter = 2
   AND ((delay_time_agg_cost + 600) > walk_delay_time_agg_cost AND walk_delay_time_agg_cost > 599 AND walk_delay_time_agg_cost < 1801)
   UNION
   SELECT 3 AS type, 'pt_count' AS description, Count(DISTINCT batch_item_id) AS count
-  FROM sheffield.batch_run_res_summary
+  FROM batch_run_res_summary
   WHERE mode_filter = 2
   AND ((delay_time_agg_cost + 600) > pt_delay_time_agg_cost AND pt_Active_time_agg_cost > 599 AND  pt_delay_time_agg_cost > 599 AND pt_delay_time_agg_cost < 1801)                      
   UNION
   SELECT 4 AS type, 'active_count' AS description, Count(DISTINCT batch_item_id) AS count
-  FROM sheffield.batch_run_res_summary
+  FROM batch_run_res_summary
   WHERE mode_filter = 2
   AND (
   ((delay_time_agg_cost + 600) > bike_delay_time_agg_cost AND bike_delay_time_agg_cost > 599 AND bike_delay_time_agg_cost < 1801) 
@@ -211,7 +211,7 @@ counts <- dbGetQuery(con, "SELECT * FROM (
   )
   UNION
   SELECT 5 AS type, 'item_count' AS description, Count(DISTINCT batch_item_id) AS count
-  FROM sheffield.batch_run_res_summary
+  FROM batch_run_res_summary
 ) x 
 ORDER BY x.type")
 
@@ -224,22 +224,22 @@ v_ptportionperc = (counts[3,3] / counts[5,3]) * 100
 
 counts_all <- dbGetQuery(con, "SELECT * FROM (
                      SELECT 1 AS type, 'bike_count' AS description, Count(DISTINCT batch_item_id) AS count
-                         FROM sheffield.batch_run_res_summary
+                         FROM batch_run_res_summary
                          WHERE mode_filter = 2
                          AND (bike_delay_time_agg_cost > 599 AND bike_delay_time_agg_cost < 1801)
                          UNION
                          SELECT 2 AS type, 'walk_count' AS description, Count(DISTINCT batch_item_id) AS count
-                         FROM sheffield.batch_run_res_summary
+                         FROM batch_run_res_summary
                          WHERE mode_filter = 2
                          AND (walk_delay_time_agg_cost > 599 AND walk_delay_time_agg_cost < 1801)
                          UNION
                          SELECT 3 AS type, 'pt_count' AS description, Count(DISTINCT batch_item_id) AS count
-                         FROM sheffield.batch_run_res_summary
+                         FROM batch_run_res_summary
                          WHERE mode_filter = 2
                          AND (pt_Active_time_agg_cost > 599 AND  pt_delay_time_agg_cost > 599 AND pt_delay_time_agg_cost < 1801)                      
                          UNION
                          SELECT 4 AS type, 'active_count' AS description, Count(DISTINCT batch_item_id) AS count
-                         FROM sheffield.batch_run_res_summary
+                         FROM batch_run_res_summary
                          WHERE mode_filter = 2
                          AND (
                          (bike_delay_time_agg_cost > 599 AND bike_delay_time_agg_cost < 1801) 
@@ -248,7 +248,7 @@ counts_all <- dbGetQuery(con, "SELECT * FROM (
                          )
                          UNION
                          SELECT 5 AS type, 'item_count' AS description, Count(DISTINCT batch_item_id) AS count
-                         FROM sheffield.batch_run_res_summary
+                         FROM batch_run_res_summary
 ) x 
                          ORDER BY x.type")
 

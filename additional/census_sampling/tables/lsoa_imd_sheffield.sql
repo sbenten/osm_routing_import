@@ -1,8 +1,8 @@
-﻿-- Table: sheffield.lsoa_imd_sheffield
+﻿-- Table: lsoa_imd_sheffield
 
--- DROP TABLE sheffield.lsoa_imd_sheffield;
+-- DROP TABLE lsoa_imd_sheffield;
 
-CREATE TABLE sheffield.lsoa_imd_sheffield
+CREATE TABLE lsoa_imd_sheffield
 (
   id integer NOT NULL,
   geom geometry(MultiPolygon,27700),
@@ -23,15 +23,15 @@ CREATE TABLE sheffield.lsoa_imd_sheffield
 WITH (
   OIDS=FALSE
 );
-ALTER TABLE sheffield.lsoa_imd_sheffield
+ALTER TABLE lsoa_imd_sheffield
   OWNER TO postgres;
 
--- Index: sheffield.lsoa_imd_sheffield_geom_idx
+-- Index: lsoa_imd_sheffield_geom_idx
 
--- DROP INDEX sheffield.lsoa_imd_sheffield_geom_idx;
+-- DROP INDEX lsoa_imd_sheffield_geom_idx;
 
 CREATE INDEX lsoa_imd_sheffield_geom_idx
-  ON sheffield.lsoa_imd_sheffield
+  ON lsoa_imd_sheffield
   USING gist
   (geom);
 

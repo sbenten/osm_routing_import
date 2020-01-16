@@ -1,23 +1,23 @@
-﻿-- Sequence: import.public_transport_services_id_seq
+﻿-- Sequence: public_transport_services_id_seq
 
--- DROP SEQUENCE import.public_transport_services_id_seq;
+-- DROP SEQUENCE public_transport_services_id_seq;
 
-CREATE SEQUENCE import.public_transport_services_id_seq
+CREATE SEQUENCE public_transport_services_id_seq
   INCREMENT 1
   MINVALUE 1
   MAXVALUE 9223372036854775807
   START 1
   CACHE 1;
-ALTER TABLE import.public_transport_services_id_seq
+ALTER TABLE public_transport_services_id_seq
   OWNER TO postgres;
 
--- Table: import.public_transport_services
+-- Table: public_transport_services
 
--- DROP TABLE import.public_transport_services;
+-- DROP TABLE public_transport_services;
 
-CREATE TABLE import.public_transport_services
+CREATE TABLE public_transport_services
 (
-  id integer NOT NULL DEFAULT nextval('import.public_transport_services_id_seq'::regclass),
+  id integer NOT NULL DEFAULT nextval('public_transport_services_id_seq'::regclass),
   import_file_id integer,
   service_code character varying NOT NULL,
   line_name character varying NOT NULL,
@@ -33,5 +33,5 @@ CREATE TABLE import.public_transport_services
 WITH (
   OIDS=FALSE
 );
-ALTER TABLE import.public_transport_services
+ALTER TABLE public_transport_services
   OWNER TO postgres;

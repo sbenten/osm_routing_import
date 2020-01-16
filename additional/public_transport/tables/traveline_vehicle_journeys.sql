@@ -1,23 +1,23 @@
-﻿-- Sequence: import.traveline_vehicle_journeys_id_seq
+﻿-- Sequence: traveline_vehicle_journeys_id_seq
 
--- DROP SEQUENCE import.traveline_vehicle_journeys_id_seq;
+-- DROP SEQUENCE traveline_vehicle_journeys_id_seq;
 
-CREATE SEQUENCE import.traveline_vehicle_journeys_id_seq
+CREATE SEQUENCE traveline_vehicle_journeys_id_seq
   INCREMENT 1
   MINVALUE 1
   MAXVALUE 9223372036854775807
   START 1
   CACHE 1;
-ALTER TABLE import.traveline_vehicle_journeys_id_seq
+ALTER TABLE traveline_vehicle_journeys_id_seq
   OWNER TO postgres;
 
--- Table: import.traveline_vehicle_journeys
+-- Table: traveline_vehicle_journeys
 
--- DROP TABLE import.traveline_vehicle_journeys;
+-- DROP TABLE traveline_vehicle_journeys;
 
-CREATE TABLE import.traveline_vehicle_journeys
+CREATE TABLE traveline_vehicle_journeys
 (
-  id integer NOT NULL DEFAULT nextval('import.traveline_vehicle_journeys_id_seq'::regclass),
+  id integer NOT NULL DEFAULT nextval('traveline_vehicle_journeys_id_seq'::regclass),
   file_id integer NOT NULL,
   operator_code character varying,
   vehicle_journey_code character varying NOT NULL,
@@ -35,21 +35,21 @@ CREATE TABLE import.traveline_vehicle_journeys
   sunday boolean,
   CONSTRAINT traveline_vehicle_journeys_pkey PRIMARY KEY (id),
   CONSTRAINT traveline_vehicle_journeys_file_id_fkey FOREIGN KEY (file_id)
-      REFERENCES import.traveline_files (file_id) MATCH SIMPLE
+      REFERENCES traveline_files (file_id) MATCH SIMPLE
       ON UPDATE NO ACTION ON DELETE NO ACTION DEFERRABLE INITIALLY IMMEDIATE
 )
 WITH (
   OIDS=FALSE
 );
-ALTER TABLE import.traveline_vehicle_journeys
+ALTER TABLE traveline_vehicle_journeys
   OWNER TO postgres;
 
--- Index: import.traveline_vehicle_journeys_service_code_idx
+-- Index: traveline_vehicle_journeys_service_code_idx
 
--- DROP INDEX import.traveline_vehicle_journeys_service_code_idx;
+-- DROP INDEX traveline_vehicle_journeys_service_code_idx;
 
 CREATE INDEX traveline_vehicle_journeys_service_code_idx
-  ON import.traveline_vehicle_journeys
+  ON traveline_vehicle_journeys
   USING btree
   (service_code COLLATE pg_catalog."default");
 

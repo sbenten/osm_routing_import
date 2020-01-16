@@ -109,7 +109,7 @@ def removeXmlNamepsace(file, destPath):
 
 
 def writeCsvResults(files, destPath):
-    n = os.path.join(destPath, "import.csv")
+    n = os.path.join(destPath, "csv")
     #first, change the array to include the destination directory, 
     #and pad with quotes so it can be easily used in an SQL array 
     stub = os.path.basename(destPath)

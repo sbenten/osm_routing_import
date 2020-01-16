@@ -1,23 +1,23 @@
-﻿-- Sequence: sheffield.batches_id_seq
+﻿-- Sequence: batches_id_seq
 
--- DROP SEQUENCE sheffield.batches_id_seq;
+-- DROP SEQUENCE batches_id_seq;
 
-CREATE SEQUENCE sheffield.batches_id_seq
+CREATE SEQUENCE batches_id_seq
   INCREMENT 1
   MINVALUE 1
   MAXVALUE 9223372036854775807
   START 1
   CACHE 1;
-ALTER TABLE sheffield.batches_id_seq
+ALTER TABLE batches_id_seq
   OWNER TO postgres;
 
--- Table: sheffield.batches
+-- Table: batches
 
--- DROP TABLE sheffield.batches;
+-- DROP TABLE batches;
 
-CREATE TABLE sheffield.batches
+CREATE TABLE batches
 (
-  id integer NOT NULL DEFAULT nextval('sheffield.batches_id_seq'::regclass),
+  id integer NOT NULL DEFAULT nextval('batches_id_seq'::regclass),
   name character varying,
   description character varying,
   CONSTRAINT batches_pkey PRIMARY KEY (id)
@@ -25,5 +25,5 @@ CREATE TABLE sheffield.batches
 WITH (
   OIDS=FALSE
 );
-ALTER TABLE sheffield.batches
+ALTER TABLE batches
   OWNER TO postgres;

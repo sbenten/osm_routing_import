@@ -1,8 +1,8 @@
-﻿-- Table: import.ways_config
+﻿-- Table: ways_config
 
--- DROP TABLE import.ways_config;
+-- DROP TABLE ways_config;
 
-CREATE TABLE import.ways_config
+CREATE TABLE ways_config
 (
   name character varying NOT NULL,
   type character varying NOT NULL,
@@ -13,5 +13,5 @@ CREATE TABLE import.ways_config
 WITH (
   OIDS=FALSE
 );
-ALTER TABLE import.ways_config
+ALTER TABLE ways_config
   OWNER TO postgres;

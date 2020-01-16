@@ -48,7 +48,7 @@ SELECT group_id,
 	active_delay_time_agg_format,
 	(active_time_agg_cost / ((150 / 5 :: decimal) * 60) :: decimal) * 100 AS active_percent_5days,
 	(active_time_agg_cost / ((150 / 7 :: decimal) * 60) :: decimal) * 100 AS active_percent_7days
-FROM sheffield.batch_run_res_summary
+FROM batch_run_res_summary
 WHERE sample = true
 ) i")
 

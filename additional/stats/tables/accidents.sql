@@ -1,8 +1,8 @@
-﻿-- Table: sheffield.accidents
+﻿-- Table: accidents
 
--- DROP TABLE sheffield.accidents;
+-- DROP TABLE accidents;
 
-CREATE TABLE sheffield.accidents
+CREATE TABLE accidents
 (
   id character varying NOT NULL,
   severity integer,
@@ -16,14 +16,14 @@ CREATE TABLE sheffield.accidents
 WITH (
   OIDS=FALSE
 );
-ALTER TABLE sheffield.accidents
+ALTER TABLE accidents
   OWNER TO postgres;
 
--- Index: sheffield.accidents_geom_idx
+-- Index: accidents_geom_idx
 
--- DROP INDEX sheffield.accidents_geom_idx;
+-- DROP INDEX accidents_geom_idx;
 
 CREATE INDEX accidents_geom_idx
-  ON sheffield.accidents
+  ON accidents
   USING gist
   (geom);

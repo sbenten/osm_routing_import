@@ -1,8 +1,8 @@
-﻿-- Table: sheffield.strava
+﻿-- Table: strava
 
--- DROP TABLE sheffield.strava;
+-- DROP TABLE strava;
 
-CREATE TABLE sheffield.strava
+CREATE TABLE strava
 (
   id bigint NOT NULL,
   geom geometry(MultiLineString,27700),
@@ -39,15 +39,15 @@ CREATE TABLE sheffield.strava
 WITH (
   OIDS=FALSE
 );
-ALTER TABLE sheffield.strava
+ALTER TABLE strava
   OWNER TO postgres;
 
--- Index: sheffield.sidx_strava_geom
+-- Index: sidx_strava_geom
 
--- DROP INDEX sheffield.sidx_strava_geom;
+-- DROP INDEX sidx_strava_geom;
 
 CREATE INDEX sidx_strava_geom
-  ON sheffield.strava
+  ON strava
   USING gist
   (geom);
 

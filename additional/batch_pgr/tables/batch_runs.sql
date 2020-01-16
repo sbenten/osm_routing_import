@@ -1,10 +1,10 @@
-﻿-- Table: sheffield.batch_runs
+﻿-- Table: batch_runs
 
--- DROP TABLE sheffield.batch_runs;
+-- DROP TABLE batch_runs;
 
-CREATE TABLE sheffield.batch_runs
+CREATE TABLE batch_runs
 (
-  id integer NOT NULL DEFAULT nextval('sheffield.batch_runs_id_seq'::regclass),
+  id integer NOT NULL DEFAULT nextval('batch_runs_id_seq'::regclass),
   run_date timestamp without time zone NOT NULL DEFAULT now(),
   batch_id integer NOT NULL,
   batchname character varying,
@@ -15,5 +15,5 @@ CREATE TABLE sheffield.batch_runs
 WITH (
   OIDS=FALSE
 );
-ALTER TABLE sheffield.batch_runs
+ALTER TABLE batch_runs
   OWNER TO postgres;

@@ -6,13 +6,13 @@ library("RPostgreSQL")
 # Basic stats and plots for commute mode summary
 
 #TODO
-#SELECT import.calculateTimeCost(1000, 15 :: smallint) --240
-#SELECT import.calculateTimeCost(1000, 20 :: smallint) --180   ~0.75
+#SELECT calculateTimeCost(1000, 15 :: smallint) --240
+#SELECT calculateTimeCost(1000, 20 :: smallint) --180   ~0.75
 
 
 
-#SELECT import.calculateTimeCost(1000, 5 :: smallint) --720
-#SELECT import.calculateTimeCost(1000, 4 :: smallint) --900    ~1.25
+#SELECT calculateTimeCost(1000, 5 :: smallint) --720
+#SELECT calculateTimeCost(1000, 4 :: smallint) --900    ~1.25
 
 #
 
@@ -225,7 +225,7 @@ summary <- dbGetQuery(con, "SELECT
                       pt_active_male_minus_1sd_agg_calories,
                       pt_active_male_average_agg_calories,
                       pt_active_male_plus_1sd_agg_calories
-                      FROM sheffield.batch_run_res_summary
+                      FROM batch_run_res_summary
                       WHERE exclude_stats = FALSE")
 
 cars <- subset(summary, mode_filter==1)

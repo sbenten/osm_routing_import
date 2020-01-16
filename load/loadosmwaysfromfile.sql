@@ -45,7 +45,7 @@ SELECT
 FROM x;
 
 --A bit of post insert data wrangling, get the node Ids, and their geometry as a LineString
-UPDATE osm_ways_sheffield SET node_osm_ids = xpath('//nd/@ref', way) :: varchar[];
+UPDATE osm_ways SET node_osm_ids = xpath('//nd/@ref', way) :: varchar[];
 /*
 Can't find a reliable alternative which guarantees the order of nodes when unnested from the array
 So resorting to a simple loop

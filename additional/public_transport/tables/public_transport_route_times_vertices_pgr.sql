@@ -1,23 +1,23 @@
-﻿-- Sequence: import.public_transport_route_times_vertices_pgr_id_seq
+﻿-- Sequence: public_transport_route_times_vertices_pgr_id_seq
 
--- DROP SEQUENCE import.public_transport_route_times_vertices_pgr_id_seq;
+-- DROP SEQUENCE public_transport_route_times_vertices_pgr_id_seq;
 
-CREATE SEQUENCE import.public_transport_route_times_vertices_pgr_id_seq
+CREATE SEQUENCE public_transport_route_times_vertices_pgr_id_seq
   INCREMENT 1
   MINVALUE 1
   MAXVALUE 9223372036854775807
   START 1
   CACHE 1;
-ALTER TABLE import.public_transport_route_times_vertices_pgr_id_seq
+ALTER TABLE public_transport_route_times_vertices_pgr_id_seq
   OWNER TO postgres;
 
--- Table: import.public_transport_route_times_vertices_pgr
+-- Table: public_transport_route_times_vertices_pgr
 
--- DROP TABLE import.public_transport_route_times_vertices_pgr;
+-- DROP TABLE public_transport_route_times_vertices_pgr;
 
-CREATE TABLE import.public_transport_route_times_vertices_pgr
+CREATE TABLE public_transport_route_times_vertices_pgr
 (
-  id bigint NOT NULL DEFAULT nextval('import.public_transport_route_times_vertices_pgr_id_seq'::regclass),
+  id bigint NOT NULL DEFAULT nextval('public_transport_route_times_vertices_pgr_id_seq'::regclass),
   cnt integer,
   chk integer,
   ein integer,
@@ -28,5 +28,5 @@ CREATE TABLE import.public_transport_route_times_vertices_pgr
 WITH (
   OIDS=FALSE
 );
-ALTER TABLE import.public_transport_route_times_vertices_pgr
+ALTER TABLE public_transport_route_times_vertices_pgr
   OWNER TO postgres;

@@ -13,7 +13,7 @@ BEGIN
 		SELECT w.osm_id, 
 			w.geom,
 			unnest(xpath('//way/tag[@k="amenity" and @v="parking"]/@v', w.way)) AS amenity
-		FROM osm_ways_sheffield w
+		FROM osm_ways w
 	) i;
 
 	RAISE NOTICE '2. Now add the name and access restrictions (optional tags)';
@@ -22,7 +22,7 @@ BEGIN
 		SELECT w.osm_id, 
 			unnest(xpath('//way/tag[@k="amenity" and @v="parking"]/@v', w.way)) AS amenity,	
 			unnest(xpath('//way/tag[@k="name"]/@v', w.way)) AS name
-		FROM osm_ways_sheffield w
+		FROM osm_ways w
 	) AS x 
 	WHERE car_parks.osm_id = x.osm_id;
 
@@ -31,7 +31,7 @@ BEGIN
 		SELECT w.osm_id, 
 			unnest(xpath('//way/tag[@k="amenity" and @v="parking"]/@v', w.way)) AS amenity,	
 			unnest(xpath('//way/tag[@k="access"]/@v', w.way)) AS access
-		FROM osm_ways_sheffield w
+		FROM osm_ways w
 	) AS x 
 	WHERE car_parks.osm_id = x.osm_id;
 
