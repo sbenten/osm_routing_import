@@ -259,6 +259,85 @@ v_walkportionperc_all = (counts_all[2,3] / counts_all[5,3]) * 100
 v_ptportionperc_all = (counts_all[3,3] / counts_all[5,3]) * 100
 
 
+#Do it all again, this time with differnet speeds for active modes.
+#4kph for walking (rather than the model of 5kph)
+#20kph for cycling (rather than 15KPH)
+
+
+counts_mod <- dbGetQuery(con, "SELECT * FROM (
+                     SELECT 1 AS type, 'bike_count' AS description, Count(DISTINCT batch_item_id) AS count
+                     FROM batch_run_res_summary
+                     WHERE mode_filter = 2
+                     AND ((delay_time_agg_cost + 600) > (bike_delay_time_agg_cost * 0.75) AND (bike_delay_time_agg_cost * 0.75) > 599 AND (bike_delay_time_agg_cost * 0.75) < 1801)
+                     UNION
+                     SELECT 2 AS type, 'walk_count' AS description, Count(DISTINCT batch_item_id) AS count
+                     FROM batch_run_res_summary
+                     WHERE mode_filter = 2
+                     AND ((delay_time_agg_cost + 600) > (walk_delay_time_agg_cost * 1.25) AND (walk_delay_time_agg_cost * 1.25) > 599 AND (walk_delay_time_agg_cost * 1.25) < 1801)
+                     UNION
+                     SELECT 3 AS type, 'pt_count' AS description, Count(DISTINCT batch_item_id) AS count
+                     FROM batch_run_res_summary
+                     WHERE mode_filter = 2
+                     AND ((delay_time_agg_cost + 600) > (pt_delay_time_agg_cost * 1.25) AND (pt_Active_time_agg_cost * 1.25) > 599 AND (pt_delay_time_agg_cost * 1.25) > 599 AND (pt_delay_time_agg_cost * 1.25) < 1801)                      
+                     UNION
+                     SELECT 4 AS type, 'active_count' AS description, Count(DISTINCT batch_item_id) AS count
+                     FROM batch_run_res_summary
+                     WHERE mode_filter = 2
+                     AND (
+                     ((delay_time_agg_cost + 600) > (bike_delay_time_agg_cost * 0.75) AND (bike_delay_time_agg_cost * 0.75) > 599 AND (bike_delay_time_agg_cost * 0.75) < 1801) 
+                     OR ((delay_time_agg_cost + 600) > (walk_delay_time_agg_cost * 1.25) AND (walk_delay_time_agg_cost * 1.25) > 599 AND (walk_delay_time_agg_cost * 1.25) < 1801)
+                     OR ((delay_time_agg_cost + 600) > (pt_delay_time_agg_cost * 1.25) AND (pt_Active_time_agg_cost * 1.25) > 599 AND (pt_delay_time_agg_cost * 1.25) > 599 AND (pt_delay_time_agg_cost * 1.25) < 1801)                      
+                     )
+                     UNION
+                     SELECT 5 AS type, 'item_count' AS description, Count(DISTINCT batch_item_id) AS count
+                     FROM batch_run_res_summary
+) x 
+                     ORDER BY x.type")
+
+
+v_activeportionperc_mod = (counts_mod[4,3] / counts_mod[5,3]) * 100
+v_bikeportionperc_mod = (counts_mod[1,3] / counts_mod[5,3]) * 100
+v_walkportionperc_mod = (counts_mod[2,3] / counts_mod[5,3]) * 100
+v_ptportionperc_mod = (counts_mod[3,3] / counts_mod[5,3]) * 100
+
+
+counts_mod_all <- dbGetQuery(con, "SELECT * FROM (
+                         SELECT 1 AS type, 'bike_count' AS description, Count(DISTINCT batch_item_id) AS count
+                         FROM batch_run_res_summary
+                         WHERE mode_filter = 2
+                         AND ((bike_delay_time_agg_cost* 0.75) > 599 AND (bike_delay_time_agg_cost * 0.75) < 1801)
+                         UNION
+                         SELECT 2 AS type, 'walk_count' AS description, Count(DISTINCT batch_item_id) AS count
+                         FROM batch_run_res_summary
+                         WHERE mode_filter = 2
+                         AND ((walk_delay_time_agg_cost * 1.25) > 599 AND (walk_delay_time_agg_cost * 1.25) < 1801)
+                         UNION
+                         SELECT 3 AS type, 'pt_count' AS description, Count(DISTINCT batch_item_id) AS count
+                         FROM batch_run_res_summary
+                         WHERE mode_filter = 2
+                         AND ((pt_Active_time_agg_cost * 1.25) > 599 AND (pt_delay_time_agg_cost * 1.25) > 599 AND (pt_delay_time_agg_cost * 1.25) < 1801)  
+                         UNION
+                         SELECT 4 AS type, 'active_count' AS description, Count(DISTINCT batch_item_id) AS count
+                         FROM batch_run_res_summary
+                         WHERE mode_filter = 2
+                         AND (
+                         ((bike_delay_time_agg_cost * 0.75) > 599 AND (bike_delay_time_agg_cost * 0.75) < 1801) 
+                         OR ((walk_delay_time_agg_cost * 1.25) > 599 AND (walk_delay_time_agg_cost * 1.25) < 1801)
+                         OR ((pt_Active_time_agg_cost * 1.25) > 599 AND  (pt_delay_time_agg_cost * 1.25) > 599 AND (pt_delay_time_agg_cost * 1.25) < 1801)                      
+                         )
+                         UNION
+                         SELECT 5 AS type, 'item_count' AS description, Count(DISTINCT batch_item_id) AS count
+                         FROM batch_run_res_summary
+) x 
+                         ORDER BY x.type")
+
+
+v_activeportionperc_mod_all = (counts_mod_all[4,3] / counts_mod_all[5,3]) * 100
+v_bikeportionperc_mod_all = (counts_mod_all[1,3] / counts_mod_all[5,3]) * 100
+v_walkportionperc_mod_all = (counts_mod_all[2,3] / counts_mod_all[5,3]) * 100
+v_ptportionperc_mod_all = (counts_mod_all[3,3] / counts_mod_all[5,3]) * 100
+
+
 
 
 
