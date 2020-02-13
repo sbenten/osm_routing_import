@@ -55,7 +55,8 @@ flows <- dbGetQuery(con, "SELECT group_id, batch_run_id, batch_item_id, batch_it
                     CEIL(length_agg_cost / 1000) AS km_ceil_cost,
                     CEIL(delay_time_agg_cost / 60) AS delay_time_ceil_cost
                     FROM batch_run_res_summary 
-	                  WHERE mode_filter IN(2, 3, 4)
+	                  WHERE mode_filter IN(3, 4, 6)
+                    AND active_time_agg_cost > 599
                     AND exclude_stats = false 
                     AND delay_time_agg_cost > 599
                     AND delay_time_agg_cost < 1801
@@ -74,15 +75,16 @@ flows <- dbGetQuery(con, "SELECT group_id, batch_run_id, batch_item_id, batch_it
 
 bike <- subset(flows, mode_filter==3)
 walk <- subset(flows, mode_filter==4)
-
+pt <- subset(flows, mode_filter==6)
 
 v_totalcount <- nrow(flows)
 v_bikecount <- nrow(bike)
 v_walkcount <- nrow(walk)
+v_ptcount <- nrow(pt)
 
 v_walkperc <- (v_walkcount / v_totalcount) * 100
 v_bikeperc <- (v_bikecount / v_totalcount) * 100
-
+v_ptperc <- (v_ptcount / v_totalcount) * 100
 
 walk_summary <- summary(walk$delay_time_agg_cost)
 walk_sd <- sd(walk$delay_time_agg_cost)
@@ -93,6 +95,11 @@ bike_summary <- summary(bike$delay_time_agg_cost)
 bike_sd <- sd(bike$delay_time_agg_cost)
 bike_skew <- skewness(bike$delay_time_agg_cost)
 bike_kurt <- kurtosis(bike$delay_time_agg_cost)
+
+pt_summary <- summary(pt$delay_time_agg_cost)
+pt_sd <- sd(pt$delay_time_agg_cost)
+pt_skew <- skewness(pt$delay_time_agg_cost)
+pt_kurt <- kurtosis(pt$delay_time_agg_cost)
 
 #density of walking selection
 ggplot(walk) + 
@@ -110,6 +117,14 @@ ggplot(bike) +
   theme(panel.border = element_rect(color = "#262626", size = 1.5, linetype = "solid", fill=NA)) +
   geom_vline(xintercept=mean((bike$delay_time_agg_cost/60)), linetype="dotted", color="black", size=1) 
 
+cols <- c("Whole journey"="#984ea3","Physical activity"="#ff7f00")
+ggplot(pt) + 
+  labs(title="", x="Commute time (mins)", y="Density") +
+  geom_density(aes((delay_time_agg_cost / 60), fill="Whole journey"), alpha=0.8) +
+  geom_density(aes((active_time_agg_cost / 60), fill="Physical activity"), alpha=0.8) +
+  scale_fill_manual(name=" ", values=cols)+
+  theme(panel.border = element_rect(color = "#262626", size = 1.5, linetype = "solid", fill=NA)) +
+  geom_vline(xintercept=mean((pt$delay_time_agg_cost/60)), linetype="dotted", color="black", size=1) 
 
 
 #basic plot of the data 
@@ -160,7 +175,8 @@ flows_all <- dbGetQuery(con, "SELECT group_id, batch_run_id, batch_item_id, batc
                     CEIL(length_agg_cost / 1000) AS km_ceil_cost,
                     CEIL(delay_time_agg_cost / 60) AS delay_time_ceil_cost
                     FROM batch_run_res_summary 
-                    WHERE mode_filter IN(3, 4)
+                    WHERE mode_filter IN(3, 4, 6)
+                    AND active_time_agg_cost > 599
                     AND exclude_stats = false 
                     AND delay_time_agg_cost > 599
                     AND delay_time_agg_cost < 1801")
@@ -168,14 +184,16 @@ flows_all <- dbGetQuery(con, "SELECT group_id, batch_run_id, batch_item_id, batc
 
 bike_all <- subset(flows_all, mode_filter==3)
 walk_all <- subset(flows_all, mode_filter==4)
+pt_all <- subset(flows_all, mode_filter==6)
 
 v_totalcountall <- nrow(flows_all)
 v_bikecountall <- nrow(bike_all)
 v_walkcountall <- nrow(walk_all)
+v_ptcountall <- nrow(pt_all)
 
 v_walkpercall <- (v_walkcountall / v_totalcountall) * 100
 v_bikepercall <- (v_bikecountall / v_totalcountall) * 100
-
+v_ptpercall <- (v_ptcountall / v_totalcountall) * 100
 
 #basic plot of the data 
 ggplot(data=flows_all, aes(home_health_decile)) +

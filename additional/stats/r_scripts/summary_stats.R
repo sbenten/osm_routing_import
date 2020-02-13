@@ -344,48 +344,6 @@ min_car_ascent_agg_cost_df <- cars[which.min(cars$ascent_agg_cost),]
 
 #DIRECTNESS OF COMMUTE - COMPARE MEAN DISTANCES OF TRANSPORT MODES
 
-#GROUPED BY 1KM 
-#ggplot(data=summary, aes(x=km_ceil_cost, colour=mode, fill=mode)) +
-#  geom_bar(alpha=0.66) +
-#  facet_wrap( ~ mode) +
-#  labs(title="Commute distance by travel mode", x="Length (km)", y="Count") +
-#  theme(strip.background=element_blank(), panel.border = element_rect(color = "#262626", size=0.5, linetype = "solid", fill=NA)) +
-#  scale_x_continuous(limits=c(0, 30), breaks=c(0,10,20,30), labels=c("0","10","20","30")) +
-#  scale_fill_manual(name="", values=c("Car (door to door)"="#e41a1c","Car (with parking)"="#377eb8","Cycling"="#4daf4a","Public Transport"="#ff7f00","Walking"="#984ea3")) +
-#  scale_colour_manual(name="", values=c("Car (door to door)"="#e41a1c","Car (with parking)"="#377eb8","Cycling"="#4daf4a","Public Transport"="#ff7f00","Walking"="#984ea3")) 
-
-#GROUPED BY 2KM 
-#ggplot(data=summary, aes(x=km_2_ceil_cost, colour=mode, fill=mode)) +
-#  geom_bar(alpha=0.66) +
-#  facet_wrap( ~ mode) +
-#  labs(title="Commute distance by travel mode", x="Length (km)", y="Count") +
-#  theme(strip.background=element_blank(), panel.border = element_rect(color = "#262626", size=0.5, linetype = "solid", fill=NA)) +
-#  scale_x_continuous(limits=c(0, 30), breaks=c(0,10,20,30), labels=c("0","10","20","30")) +
-#  scale_fill_manual(name="", values=c("Car (door to door)"="#e41a1c","Car (with parking)"="#377eb8","Cycling"="#4daf4a","Public Transport"="#ff7f00","Walking"="#984ea3")) +
-#  scale_colour_manual(name="", values=c("Car (door to door)"="#e41a1c","Car (with parking)"="#377eb8","Cycling"="#4daf4a","Public Transport"="#ff7f00","Walking"="#984ea3")) 
-
-#GROUPED BY 3KM 
-#ggplot(data=summary, aes(x=km_3_ceil_cost, colour=mode, fill=mode)) +
-#  geom_bar(alpha=0.66) +
-#  facet_wrap( ~ mode) +
-#  labs(title="Commute distance by travel mode", x="Length (km)", y="Count") +
-#  theme(strip.background=element_blank(), panel.border = element_rect(color = "#262626", size=0.5, linetype = "solid", fill=NA)) +
-#  scale_x_continuous(limits=c(0, 30), breaks=c(0,10,20,30), labels=c("0","10","20","30")) +
-#  scale_fill_manual(name="", values=c("Car (door to door)"="#e41a1c","Car (with parking)"="#377eb8","Cycling"="#4daf4a","Public Transport"="#ff7f00","Walking"="#984ea3")) +
-#  scale_colour_manual(name="", values=c("Car (door to door)"="#e41a1c","Car (with parking)"="#377eb8","Cycling"="#4daf4a","Public Transport"="#ff7f00","Walking"="#984ea3")) 
-
-#GROUPED BY 5KM
-#ggplot(data=summary, aes(x=km_5_ceil_cost, colour=mode, fill=mode)) +
-#  geom_bar(alpha=0.66) +
-#  facet_wrap( ~ mode) +
-#  labs(title="Commute distance by travel mode", x="Length (km)", y="Count") +
-#  theme(strip.background=element_blank(), panel.border = element_rect(color = "#262626", size=0.5, linetype = "solid", fill=NA)) +
-#  scale_x_continuous(limits=c(0, 30), breaks=c(0,10,20,30), labels=c("0","10","20","30")) +
-#  scale_fill_manual(name="", values=c("Car (door to door)"="#e41a1c","Car (with parking)"="#377eb8","Cycling"="#4daf4a","Public Transport"="#ff7f00","Walking"="#984ea3")) +
-#  scale_colour_manual(name="", values=c("Car (door to door)"="#e41a1c","Car (with parking)"="#377eb8","Cycling"="#4daf4a","Public Transport"="#ff7f00","Walking"="#984ea3")) 
-
-#DENSITY
-
 #DENSITY OF DISTANCES FOR CAR (DOOR TO DOOR)
 ggplot(cars) + 
   labs(title="", x="Commute distance (km)", y="Density") +
@@ -515,6 +473,17 @@ ggplot(parking) +
   theme(legend.position = "non", panel.border = element_rect(color = "#262626", size = 1.5, linetype = "solid", fill=NA)) +
   scale_colour_brewer(palette = "Spectral")
 
+imd_means_decile <- aggregate(parking$length_agg_cost, list(parking$home_decile), mean) 
+colnames(imd_means_decile) <- c("home_decile", "length_agg_cost")
+ggplot(parking) + 
+  geom_violin(aes(x=home_decile, y=length_agg_cost, colour=cat_home_decile, fill=cat_home_decile), outlier.color="black") +
+  labs(title="", y="Commute distance (km)", x="IMD decile") +
+  scale_x_continuous(breaks=c(1:10), labels=c("1","2","3","4","5","6","7","8","9","10")) +
+  scale_y_continuous(limits=c(0, 30000), breaks=c(0,10000,20000,30000), labels=c("0","10","20","30")) +
+  geom_point(data=imd_means_decile,  mapping=aes(x=home_decile, y=length_agg_cost), col="black") +
+  geom_line(data=imd_means_decile,  mapping=aes(x=home_decile, y=length_agg_cost, group=1), col="black") +
+  theme(legend.position = "non", panel.border = element_rect(color = "#262626", size = 1.5, linetype = "solid", fill=NA)) +
+  scale_colour_brewer(palette = "Spectral")
 
 #BOXPLOT OF Commute distance by IMD health decile
 imd_means_health_decile <- aggregate(parking$length_agg_cost, list(parking$home_health_decile), mean) 
